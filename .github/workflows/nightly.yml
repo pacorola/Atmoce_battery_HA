@@ -1,0 +1,34 @@
+name: Nightly release
+
+on:
+  schedule:
+    - cron: "0 2 * * *"  # Todos los días a las 02:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete existing nightly release (if exists)
+        run: |
+          gh release delete nightly --yes || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create nightly release
+        run: |
+          gh release create nightly \
+            --title "Nightly build" \
+            --notes "🚧 Nightly build – latest commit on main" \
+            --prerelease
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
