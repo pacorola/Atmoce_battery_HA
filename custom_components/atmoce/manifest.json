@@ -1,0 +1,13 @@
+{
+  "domain": "atmoce",
+  "name": "Atmoce Battery",
+  "version": "1.0.0",
+  "config_flow": true,
+  "documentation": "https://github.com/pacorola/Atmoce_battery_HA",
+  "issue_tracker": "https://github.com/pacorola/Atmoce_battery_HA/issues",
+  "requirements": ["pymodbus==3.6.9"],
+  "dependencies": [],
+  "codeowners": ["@pacorola"],
+  "iot_class": "local_polling",
+  "loggers": ["custom_components.atmoce"]
+}

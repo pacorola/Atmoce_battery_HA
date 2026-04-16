@@ -1,0 +1,73 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Atmoce Gateway — Connection",
+        "description": "Enter the local IP address of your Atmoce Gateway (MC100 / MG100).",
+        "data": {
+          "host": "IP address",
+          "port": "Modbus TCP port",
+          "slave": "Modbus slave ID"
+        }
+      },
+      "battery": {
+        "title": "Battery model",
+        "description": "Select your battery model. This sets the correct power limits.",
+        "data": {
+          "battery_model": "Model"
+        }
+      },
+      "manual_battery": {
+        "title": "Manual battery specs",
+        "description": "Enter your battery specifications manually.",
+        "data": {
+          "capacity_kwh": "Usable capacity (kWh)",
+          "charge_kw": "Max continuous charge power (kW)",
+          "discharge_kw": "Max continuous discharge power (kW)"
+        }
+      },
+      "cloud": {
+        "title": "Atmoce Cloud (optional)",
+        "description": "Cloud is used as a read-only fallback if Modbus is unavailable. Leave disabled if you only use local access.",
+        "data": {
+          "cloud_enabled": "Enable Cloud fallback",
+          "cloud_app_key": "API app_key",
+          "cloud_app_secret": "API app_secret",
+          "modbus_retry_count": "Modbus failures before Cloud fallback"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate — gateway IP changed",
+        "data": {
+          "host": "New IP address",
+          "port": "Modbus TCP port",
+          "slave": "Modbus slave ID"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the Atmoce gateway. Check the IP address and that Modbus TCP is enabled.",
+      "cloud_credentials_required": "Both app_key and app_secret are required when Cloud fallback is enabled."
+    },
+    "abort": {
+      "already_configured": "This gateway is already configured.",
+      "reauth_successful": "Re-authentication successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Atmoce options",
+        "data": {
+          "modbus_retry_count": "Modbus failures before Cloud fallback",
+          "cloud_enabled": "Enable Cloud fallback",
+          "cloud_app_key": "API app_key",
+          "cloud_app_secret": "API app_secret"
+        }
+      }
+    },
+    "error": {
+      "cloud_credentials_required": "Both app_key and app_secret are required when Cloud fallback is enabled."
+    }
+  }
+}
