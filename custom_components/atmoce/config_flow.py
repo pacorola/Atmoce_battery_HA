@@ -53,6 +53,7 @@ def _gateway_schema(
                     max=247,
                     step=1,
                     mode=selector.NumberSelectorMode.BOX,
+                )
             ),
         }
     )
