@@ -1,5 +1,5 @@
 <p align="left">
-  <img src="custom_components/atmoce/icon.png" alt="Atmoce Battery" width="300">
+  <img src="custom_components/atmoce/brand/icon.png" alt="Atmoce Battery" width="300">
 </p>
 
 # Atmoce Battery — Home Assistant Integration
