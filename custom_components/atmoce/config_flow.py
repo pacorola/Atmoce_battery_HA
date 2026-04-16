@@ -101,7 +101,6 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
-        show_advanced = False
 
         if user_input is not None:
             host = user_input[CONF_HOST].strip()
