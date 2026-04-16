@@ -27,6 +27,8 @@ from .const import (
     SOURCE_CLOUD,
     SOURCE_MODBUS,
 )
+from pymodbus.exceptions import ModbusException
+
 from .modbus_client import AtmoceModbusClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -98,7 +100,7 @@ class AtmoceCoordinator(DataUpdateCoordinator):
             raw = await self._fetch_modbus()
             self._modbus_failures = 0
             self._active_source = SOURCE_MODBUS
-        except Exception as exc:  # noqa: BLE001
+        except (ConnectionError, ModbusException, OSError, asyncio.TimeoutError) as exc:
             self._modbus_failures += 1
             self._connection_errors += 1
             _LOGGER.warning(
@@ -114,7 +116,7 @@ class AtmoceCoordinator(DataUpdateCoordinator):
                 raw = await self._fetch_cloud()
                 self._active_source = SOURCE_CLOUD
                 _LOGGER.info("Using Cloud API as data source (Modbus unavailable)")
-            except Exception as exc:  # noqa: BLE001
+            except (ConnectionError, OSError, asyncio.TimeoutError) as exc:
                 _LOGGER.error("Cloud fallback also failed: %s", exc)
 
         if raw is None:
@@ -139,7 +141,7 @@ class AtmoceCoordinator(DataUpdateCoordinator):
             try:
                 self.firmware_version = await self._modbus.async_read_firmware_version()
                 self.hw_version = await self._modbus.async_read_hw_version()
-            except Exception:  # noqa: BLE001
+            except (ModbusException, ConnectionError, OSError):
                 pass
 
         return data

@@ -27,6 +27,8 @@ from .const import (
     DOMAIN,
     MODBUS_RETRY_COUNT,
 )
+from pymodbus.exceptions import ModbusException
+
 from .modbus_client import AtmoceModbusClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -102,7 +104,7 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await client.async_connect()
                 sn = await client.async_read_serial_number()
                 await client.async_close()
-            except Exception:  # noqa: BLE001
+            except (ConnectionError, ModbusException, OSError):
                 errors["base"] = "cannot_connect"
                 sn = None
 
@@ -202,7 +204,7 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 await client.async_connect()
                 await client.async_close()
-            except Exception:  # noqa: BLE001
+            except (ConnectionError, ModbusException, OSError):
                 errors["base"] = "cannot_connect"
 
             if not errors:

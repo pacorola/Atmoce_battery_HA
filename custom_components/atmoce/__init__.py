@@ -41,7 +41,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinator: AtmoceCoordinator = hass.data[DOMAIN].pop(entry.entry_id)
         try:
             await coordinator._modbus.async_close()
-        except Exception:  # noqa: BLE001
+        except OSError:
             pass
     return unload_ok
 

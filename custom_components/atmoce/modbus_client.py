@@ -11,6 +11,7 @@ from pymodbus.exceptions import ModbusException
 
 from .const import (
     MODBUS_TIMEOUT,
+    REG_ACTIVE_POWER_PCT,
     REG_BATTERY_CHARGED_DAILY,
     REG_BATTERY_CHARGED_TOTAL,
     REG_BATTERY_DISCHARGED_DAILY,
@@ -52,19 +53,23 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def _regs_to_uint32(regs: list[int]) -> int:
+    """Combine two 16-bit Modbus registers into an unsigned 32-bit integer (big-endian)."""
     return (regs[0] << 16) | regs[1]
 
 
 def _regs_to_int32(regs: list[int]) -> int:
+    """Combine two 16-bit Modbus registers into a signed 32-bit integer (big-endian, two's complement)."""
     raw = (regs[0] << 16) | regs[1]
     return struct.unpack(">i", struct.pack(">I", raw))[0]
 
 
 def _regs_to_uint64(regs: list[int]) -> int:
+    """Combine four 16-bit Modbus registers into an unsigned 64-bit integer (big-endian)."""
     return (regs[0] << 48) | (regs[1] << 32) | (regs[2] << 16) | regs[3]
 
 
 def _regs_to_str(regs: list[int]) -> str:
+    """Decode Modbus registers as a packed ASCII string, stripping null bytes and whitespace."""
     raw = b"".join(struct.pack(">H", r) for r in regs)
     return raw.decode("ascii", errors="ignore").strip("\x00").strip()
 
@@ -177,7 +182,7 @@ class AtmoceModbusClient:
         async def safe(key: str, coro):
             try:
                 data[key] = await coro
-            except Exception as exc:  # noqa: BLE001
+            except (ModbusException, ConnectionError, OSError) as exc:
                 _LOGGER.debug("Register read failed for %s: %s", key, exc)
                 data[key] = None
 
@@ -275,7 +280,7 @@ class AtmoceModbusClient:
     async def async_set_active_power_pct(self, pct: float) -> None:
         """0–100 %, register scale ×10."""
         await self._write_uint16(REG_COMM_CONTROL_MODE[0], 1)  # ensure remote
-        await self._write_uint16(60304, int(pct * 10))
+        await self._write_uint16(REG_ACTIVE_POWER_PCT[0], int(pct * 10))
 
     async def async_reset_gateway(self) -> None:
         await self._write_uint16(REG_RESET[0], 0)

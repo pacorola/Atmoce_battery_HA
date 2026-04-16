@@ -140,14 +140,30 @@ automation:
 
 ## FAQ
 
-See [FAQ.md](FAQ.md) for common questions and troubleshooting steps.
+**The integration fails to connect during setup.**
+Make sure the gateway (MC100 / MG100) has Modbus TCP enabled on port 502. This is the default factory setting. If you changed the port, enter it in the setup wizard.
+
+**Buttons / controls don't appear in Home Assistant.**
+Reload the integration from Settings → Devices & Services → Atmoce Battery → ⋮ → Reload. If the problem persists, restart Home Assistant.
+
+**The battery commands have no effect.**
+The `switch.atmoce_remote_control` must be turned **ON** before sending any charge/discharge command. The battery ignores Modbus write commands when in local mode.
+
+**Sensors show "unavailable" after a few hours.**
+Enable the Cloud fallback in the integration options (Settings → Devices & Services → Atmoce Battery → Configure) and enter your Atmoce Cloud API credentials. The integration will switch automatically when Modbus is unreachable.
+
+**How do I know if data is coming from Modbus or Cloud?**
+Check `sensor.atmoce_active_data_source` — it shows `Modbus` or `Cloud`.
+
+**Autonomy hours sensor is unavailable.**
+The sensor needs at least a few minutes of data to calculate a rolling average consumption. It will appear automatically after the first valid readings.
 
 ---
 
 ## Contributing
 
-Pull requests are welcome. Please open an issue first for significant changes.
+Pull requests are welcome. No need to open an issue first — just submit the PR.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+Public domain — see [LICENSE](LICENSE). No rights reserved.
