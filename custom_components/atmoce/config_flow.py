@@ -36,20 +36,20 @@ _LOGGER = logging.getLogger(__name__)
 def _gateway_schema(
     host: str = "",
     port: int = DEFAULT_PORT,
-    show_advanced: bool = False,
     slave: int = DEFAULT_SLAVE,
 ) -> vol.Schema:
-    """Build the gateway schema, optionally expanding the advanced slave field."""
-    fields: dict = {
-        vol.Required(CONF_HOST, default=host): str,
-        vol.Required(CONF_PORT, default=port): vol.All(int, vol.Range(min=1, max=65535)),
-        vol.Optional("show_advanced", default=show_advanced): bool,
-    }
-    if show_advanced:
-        fields[vol.Required(CONF_SLAVE, default=slave)] = vol.All(
-            int, vol.Range(min=1, max=247)
-        )
-    return vol.Schema(fields)
+    """Build the gateway connection schema."""
+    return vol.Schema(
+        {
+            vol.Required(CONF_HOST, default=host): str,
+            vol.Required(CONF_PORT, default=port): vol.All(
+                int, vol.Range(min=1, max=65535)
+            ),
+            vol.Required(CONF_SLAVE, default=slave): vol.All(
+                int, vol.Range(min=1, max=247)
+            ),
+        }
+    )
 
 # ── Step 2: battery model ────────────────────────────────────────────────────
 STEP_BATTERY_SCHEMA = vol.Schema(
@@ -106,18 +106,7 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             host = user_input[CONF_HOST].strip()
             port = user_input[CONF_PORT]
-            show_advanced = user_input.get("show_advanced", False)
             slave = user_input.get(CONF_SLAVE, DEFAULT_SLAVE)
-
-            # If advanced was just toggled on, re-render the same form with slave field
-            if show_advanced and CONF_SLAVE not in user_input:
-                return self.async_show_form(
-                    step_id="user",
-                    data_schema=_gateway_schema(
-                        host=host, port=port, show_advanced=True, slave=DEFAULT_SLAVE
-                    ),
-                    errors={},
-                )
 
             client = AtmoceModbusClient(host, port, slave)
             try:
@@ -139,7 +128,7 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=_gateway_schema(show_advanced=show_advanced),
+            data_schema=_gateway_schema(),
             errors=errors,
         )
 

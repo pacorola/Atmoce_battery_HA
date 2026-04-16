@@ -7,7 +7,6 @@
         "data": {
           "host": "IP address",
           "port": "Modbus TCP port",
-          "show_advanced": "Advanced settings",
           "slave": "Modbus Slave ID (1–247)"
         },
         "data_description": {
