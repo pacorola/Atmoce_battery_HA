@@ -1,7 +1,6 @@
 """Modbus TCP client for Atmoce Gateway."""
 from __future__ import annotations
 
-import asyncio
 import logging
 import struct
 from typing import Any
@@ -21,7 +20,6 @@ from .const import (
     REG_BATTERY_MODE,
     REG_BATTERY_POWER,
     REG_BATTERY_RATED_ENERGY,
-    REG_BATTERY_RATED_POWER,
     REG_BATTERY_SOC,
     REG_BATTERY_STATUS,
     REG_COMM_CONTROL_MODE,

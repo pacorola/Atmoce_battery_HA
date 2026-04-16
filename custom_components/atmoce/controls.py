@@ -12,7 +12,6 @@ from homeassistant.const import UnitOfPower, UnitOfTime, PERCENTAGE
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    DOMAIN,
     FORCED_CMD_AUTO,
     FORCED_CMD_CHARGE,
     FORCED_CMD_DISCHARGE,
