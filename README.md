@@ -162,7 +162,7 @@ The sensor needs at least a few minutes of data to calculate a rolling average c
 
 ## Contributing
 
-Pull requests are welcome. No need to open an issue first — just submit the PR.
+Pull requests are welcome. No need to open an issue first — just submit the PR. ATMOCE technical documentation on Cloud API and MODBUS protocol are uploaded in the project wiki for reference.
 
 ## License
 
