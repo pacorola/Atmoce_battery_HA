@@ -1,0 +1,79 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Gateway Atmoce — Conexión",
+        "description": "Introduce la IP local de tu gateway Atmoce (MC100 / MG100).",
+        "data": {
+          "host": "Host",
+          "port": "Puerto",
+          "show_advanced": "Ajustes avanzados"
+        }
+      },
+      "advanced": {
+        "title": "Ajustes avanzados",
+        "description": "Solo cambia el Slave ID Modbus si tu gateway fue configurado con un valor diferente al predeterminado. Déjalo en 1 si no estás seguro.",
+        "data": {
+          "slave": "Slave ID Modbus (1–247)"
+        }
+      },
+      "battery": {
+        "title": "Modelo de batería",
+        "description": "Selecciona tu modelo de batería. Esto configura los límites de potencia correctos.",
+        "data": {
+          "battery_model": "Modelo"
+        }
+      },
+      "manual_battery": {
+        "title": "Especificaciones manuales de batería",
+        "description": "Introduce las especificaciones de tu batería manualmente.",
+        "data": {
+          "capacity_kwh": "Capacidad útil (kWh)",
+          "charge_kw": "Potencia máxima de carga continua (kW)",
+          "discharge_kw": "Potencia máxima de descarga continua (kW)"
+        }
+      },
+      "cloud": {
+        "title": "Atmoce Cloud (opcional)",
+        "description": "La nube se usa como fuente de solo lectura si Modbus no está disponible. Déjalo desactivado si solo usas acceso local.",
+        "data": {
+          "cloud_enabled": "Activar fallback a Cloud",
+          "cloud_app_key": "API app_key",
+          "cloud_app_secret": "API app_secret",
+          "modbus_retry_count": "Fallos Modbus antes de cambiar a Cloud"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reautenticación — IP del gateway cambiada",
+        "data": {
+          "host": "Host",
+          "port": "Puerto"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se puede conectar al gateway Atmoce. Comprueba la dirección IP y que Modbus TCP esté habilitado.",
+      "cloud_credentials_required": "app_key y app_secret son obligatorios cuando el fallback a Cloud está activado."
+    },
+    "abort": {
+      "already_configured": "Este gateway ya está configurado.",
+      "reauth_successful": "Reautenticación correcta."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de Atmoce",
+        "data": {
+          "modbus_retry_count": "Fallos Modbus antes de cambiar a Cloud",
+          "cloud_enabled": "Activar fallback a Cloud",
+          "cloud_app_key": "API app_key",
+          "cloud_app_secret": "API app_secret"
+        }
+      }
+    },
+    "error": {
+      "cloud_credentials_required": "app_key y app_secret son obligatorios cuando el fallback a Cloud está activado."
+    }
+  }
+}
