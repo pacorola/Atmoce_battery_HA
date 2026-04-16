@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 import voluptuous as vol
+from pymodbus.exceptions import ModbusException
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PORT
@@ -27,8 +28,6 @@ from .const import (
     DOMAIN,
     MODBUS_RETRY_COUNT,
 )
-from pymodbus.exceptions import ModbusException
-
 from .modbus_client import AtmoceModbusClient
 
 _LOGGER = logging.getLogger(__name__)
