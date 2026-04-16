@@ -37,6 +37,13 @@ STEP_GATEWAY_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
         vol.Required(CONF_PORT, default=DEFAULT_PORT): vol.All(int, vol.Range(min=1, max=65535)),
+        vol.Optional("show_advanced", default=False): bool,
+    }
+)
+
+# ── Step 1b: advanced options ─────────────────────────────────────────────────
+STEP_ADVANCED_SCHEMA = vol.Schema(
+    {
         vol.Required(CONF_SLAVE, default=DEFAULT_SLAVE): vol.All(int, vol.Range(min=1, max=247)),
     }
 )
@@ -95,9 +102,10 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             host = user_input[CONF_HOST].strip()
             port = user_input[CONF_PORT]
-            slave = user_input[CONF_SLAVE]
+            show_advanced = user_input.pop("show_advanced", False)
 
-            # Try to connect and read serial number
+            # Try to connect using default slave; actual slave set in advanced step
+            slave = self._data.get(CONF_SLAVE, DEFAULT_SLAVE)
             client = AtmoceModbusClient(host, port, slave)
             try:
                 await client.async_connect()
@@ -112,6 +120,9 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
                 self._data.update(user_input)
                 self._data["serial_number"] = sn
+                self._data.setdefault(CONF_SLAVE, DEFAULT_SLAVE)
+                if show_advanced:
+                    return await self.async_step_advanced()
                 return await self.async_step_battery()
 
         return self.async_show_form(
@@ -121,6 +132,19 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "default_port": str(DEFAULT_PORT),
             },
+        )
+
+    # ── Step 1b: advanced options ─────────────────────────────────────────────
+    async def async_step_advanced(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        if user_input is not None:
+            self._data[CONF_SLAVE] = user_input[CONF_SLAVE]
+            return await self.async_step_battery()
+
+        return self.async_show_form(
+            step_id="advanced",
+            data_schema=STEP_ADVANCED_SCHEMA,
         )
 
     # ── Step 2: battery model ────────────────────────────────────────────────

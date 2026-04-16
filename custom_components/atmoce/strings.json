@@ -7,7 +7,14 @@
         "data": {
           "host": "IP address",
           "port": "Modbus TCP port",
-          "slave": "Modbus slave ID"
+          "show_advanced": "Advanced options"
+        }
+      },
+      "advanced": {
+        "title": "Advanced options",
+        "description": "Only change the Modbus Slave ID if your gateway was configured with a non-default value. Leave it at 1 if unsure.",
+        "data": {
+          "slave": "Modbus Slave ID (1–247)"
         }
       },
       "battery": {

@@ -7,7 +7,14 @@
         "data": {
           "host": "Dirección IP",
           "port": "Puerto Modbus TCP",
-          "slave": "ID esclavo Modbus"
+          "show_advanced": "Opciones avanzadas"
+        }
+      },
+      "advanced": {
+        "title": "Opciones avanzadas",
+        "description": "Solo cambia el Slave ID Modbus si tu gateway fue configurado con un valor diferente al predeterminado. Déjalo en 1 si no estás seguro.",
+        "data": {
+          "slave": "Slave ID Modbus (1–247)"
         }
       },
       "battery": {
