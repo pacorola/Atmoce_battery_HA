@@ -77,8 +77,8 @@ class AtmoceModbusClient:
 
     def __init__(self, host: str, port: int, slave: int) -> None:
         self._host = host
-        self._port = port
-        self._slave = slave
+        self._port = int(port)
+        self._slave = int(slave)
         self._client: AsyncModbusTcpClient | None = None
 
     # ── Connection ────────────────────────────────────────────────────────────
