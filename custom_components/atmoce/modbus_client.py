@@ -77,8 +77,8 @@ class AtmoceModbusClient:
 
     def __init__(self, host: str, port: int, slave: int) -> None:
         self._host = host
-        self._port = port
-        self._slave = slave
+        self._port = int(port)
+        self._slave = int(slave)
         self._client: AsyncModbusTcpClient | None = None
 
     # ── Connection ────────────────────────────────────────────────────────────
@@ -106,7 +106,7 @@ class AtmoceModbusClient:
         if not self.connected:
             raise ConnectionError("Not connected")
         result = await self._client.read_holding_registers(
-            address, count=count, slave=self._slave
+            address, count=count, device_id=self._slave
         )
         if result.isError():
             raise ModbusException(f"Error reading register {address}: {result}")
@@ -140,7 +140,7 @@ class AtmoceModbusClient:
     async def _write_uint16(self, address: int, value: int) -> None:
         if not self.connected:
             raise ConnectionError("Not connected")
-        result = await self._client.write_register(address, value, slave=self._slave)
+        result = await self._client.write_register(address, value, device_id=self._slave)
         if result.isError():
             raise ModbusException(f"Error writing register {address}: {result}")
 
@@ -149,7 +149,7 @@ class AtmoceModbusClient:
         low = value & 0xFFFF
         if not self.connected:
             raise ConnectionError("Not connected")
-        result = await self._client.write_registers(address, [high, low], slave=self._slave)
+        result = await self._client.write_registers(address, [high, low], device_id=self._slave)
         if result.isError():
             raise ModbusException(f"Error writing registers {address}: {result}")
 
@@ -158,7 +158,7 @@ class AtmoceModbusClient:
         high, low = struct.unpack(">HH", packed)
         if not self.connected:
             raise ConnectionError("Not connected")
-        result = await self._client.write_registers(address, [high, low], slave=self._slave)
+        result = await self._client.write_registers(address, [high, low], device_id=self._slave)
         if result.isError():
             raise ModbusException(f"Error writing registers {address}: {result}")
 
