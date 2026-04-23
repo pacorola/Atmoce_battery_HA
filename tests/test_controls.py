@@ -166,13 +166,13 @@ class TestForcedCommandSelect:
         return entity
 
     def test_current_option_charge(self):
-        assert self._entity(FORCED_CMD_CHARGE).current_option == "Carga forzada"
+        assert self._entity(FORCED_CMD_CHARGE).current_option == "Forced charge"
 
     def test_current_option_discharge(self):
-        assert self._entity(FORCED_CMD_DISCHARGE).current_option == "Descarga forzada"
+        assert self._entity(FORCED_CMD_DISCHARGE).current_option == "Forced discharge"
 
     def test_current_option_auto(self):
-        assert self._entity(FORCED_CMD_AUTO).current_option == "Administrado por batería"
+        assert self._entity(FORCED_CMD_AUTO).current_option == "Battery managed"
 
     def test_current_option_none_when_missing(self):
         assert self._entity(None).current_option is None
@@ -181,14 +181,14 @@ class TestForcedCommandSelect:
     async def test_select_charge(self):
         coord = _make_coordinator({"forced_cmd": FORCED_CMD_AUTO})
         entity = _make_entity(AtmoceForcedCommandSelect, coord)
-        await entity.async_select_option("Carga forzada")
+        await entity.async_select_option("Forced charge")
         coord.async_set_forced_command.assert_awaited_once_with(FORCED_CMD_CHARGE)
 
     @pytest.mark.asyncio
     async def test_select_auto(self):
         coord = _make_coordinator({"forced_cmd": FORCED_CMD_CHARGE})
         entity = _make_entity(AtmoceForcedCommandSelect, coord)
-        await entity.async_select_option("Administrado por batería")
+        await entity.async_select_option("Battery managed")
         coord.async_set_forced_command.assert_awaited_once_with(FORCED_CMD_AUTO)
 
 
@@ -199,19 +199,19 @@ class TestForcedModeSelect:
         return entity
 
     def test_current_option_soc(self):
-        assert self._entity(FORCED_MODE_SOC).current_option == "SOC objetivo"
+        assert self._entity(FORCED_MODE_SOC).current_option == "Target SOC"
 
     def test_current_option_duration(self):
-        assert self._entity(FORCED_MODE_DURATION).current_option == "Duración"
+        assert self._entity(FORCED_MODE_DURATION).current_option == "Duration"
 
     def test_current_option_both(self):
-        assert self._entity(FORCED_MODE_BOTH).current_option == "SOC + Duración"
+        assert self._entity(FORCED_MODE_BOTH).current_option == "SOC + Duration"
 
     @pytest.mark.asyncio
     async def test_select_duration(self):
         coord = _make_coordinator({"forced_mode": FORCED_MODE_SOC})
         entity = _make_entity(AtmoceForcedModeSelect, coord)
-        await entity.async_select_option("Duración")
+        await entity.async_select_option("Duration")
         coord.async_set_forced_mode.assert_awaited_once_with(FORCED_MODE_DURATION)
 
 
