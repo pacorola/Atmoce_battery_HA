@@ -122,7 +122,7 @@ class AtmoceForcedPower(AtmoceNumber):
 
 
 class AtmoceDispatchPower(AtmoceNumber):
-    _attr_native_step = 0.1
+    _attr_native_step = 0.05
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_icon = "mdi:battery-arrow-down-outline"
 
@@ -151,12 +151,12 @@ class AtmoceForcedCommandSelect(CoordinatorEntity[AtmoceCoordinator], SelectEnti
     _attr_has_entity_name = True
     _attr_name = "Battery Command"
     _attr_icon = "mdi:battery-sync"
-    _attr_options = ["Carga forzada", "Descarga forzada", "Administrado por batería"]
+    _attr_options = ["Forced charge", "Forced discharge", "Battery managed"]
 
     _CMD_TO_OPTION = {
-        FORCED_CMD_CHARGE:    "Carga forzada",
-        FORCED_CMD_DISCHARGE: "Descarga forzada",
-        FORCED_CMD_AUTO:      "Administrado por batería",
+        FORCED_CMD_CHARGE:    "Forced charge",
+        FORCED_CMD_DISCHARGE: "Forced discharge",
+        FORCED_CMD_AUTO:      "Battery managed",
     }
     _OPTION_TO_CMD = {v: k for k, v in _CMD_TO_OPTION.items()}
 
@@ -182,12 +182,12 @@ class AtmoceForcedModeSelect(CoordinatorEntity[AtmoceCoordinator], SelectEntity)
     _attr_has_entity_name = True
     _attr_name = "Forced Mode Type"
     _attr_icon = "mdi:tune"
-    _attr_options = ["SOC objetivo", "Duración", "SOC + Duración"]
+    _attr_options = ["Target SOC", "Duration", "SOC + Duration"]
 
     _MODE_TO_OPTION = {
-        FORCED_MODE_SOC:      "SOC objetivo",
-        FORCED_MODE_DURATION: "Duración",
-        FORCED_MODE_BOTH:     "SOC + Duración",
+        FORCED_MODE_SOC:      "Target SOC",
+        FORCED_MODE_DURATION: "Duration",
+        FORCED_MODE_BOTH:     "SOC + Duration",
     }
     _OPTION_TO_MODE = {v: k for k, v in _MODE_TO_OPTION.items()}
 
