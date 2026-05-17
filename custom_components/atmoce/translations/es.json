@@ -72,5 +72,84 @@
     "error": {
       "cloud_credentials_required": "app_key y app_secret son obligatorios cuando el fallback a Cloud está activado."
     }
+  },
+  "entity": {
+    "sensor": {
+      "grid_voltage":             { "name": "Tensión de red" },
+      "grid_current":             { "name": "Corriente de red" },
+      "grid_power":               { "name": "Potencia de red" },
+      "grid_energy_daily":        { "name": "Energía de red diaria" },
+      "grid_energy_total":        { "name": "Energía de red total" },
+      "elec_sales_daily":         { "name": "Electricidad vendida hoy" },
+      "elec_sales_total":         { "name": "Electricidad vendida total" },
+      "pv_power":                 { "name": "Potencia fotovoltaica" },
+      "pv_energy_daily":          { "name": "Energía FV diaria" },
+      "pv_energy_total":          { "name": "Energía FV total" },
+      "pv_self_consumption_rate": { "name": "Tasa de autoconsumo FV" },
+      "battery_soc":              { "name": "SOC batería" },
+      "battery_power":            { "name": "Potencia batería" },
+      "battery_status": {
+        "name": "Estado batería",
+        "state": {
+          "charging":    "Cargando",
+          "discharging": "Descargando",
+          "idle":        "Inactiva"
+        }
+      },
+      "battery_mode": {
+        "name": "Modo de operación batería",
+        "state": {
+          "self_consumption": "Autoconsumo",
+          "tou":              "Tarifa por horas",
+          "remote_control":   "Control remoto"
+        }
+      },
+      "battery_dispatch_power":   { "name": "Potencia de despacho batería" },
+      "battery_charged_daily":    { "name": "Batería cargada hoy" },
+      "battery_discharged_daily": { "name": "Batería descargada hoy" },
+      "battery_charged_total":    { "name": "Batería cargada total" },
+      "battery_discharged_total": { "name": "Batería descargada total" },
+      "autonomy_hours":           { "name": "Autonomía batería" },
+      "station_status": {
+        "name": "Estado de la instalación",
+        "state": {
+          "normal": "Normal",
+          "fault":  "Fallo"
+        }
+      },
+      "active_source":            { "name": "Fuente de datos activa" },
+      "connection_errors":        { "name": "Errores de conexión" }
+    },
+    "switch": {
+      "remote_control": { "name": "Control remoto" }
+    },
+    "number": {
+      "forced_target_soc": { "name": "SOC objetivo forzado" },
+      "forced_duration":   { "name": "Duración forzada" },
+      "forced_power":      { "name": "Potencia forzada" },
+      "dispatch_power":    { "name": "Potencia de despacho" }
+    },
+    "select": {
+      "battery_command": {
+        "name": "Comando batería",
+        "state": {
+          "forced_charge":    "Carga forzada",
+          "forced_discharge": "Descarga forzada",
+          "battery_managed":  "Administrado por batería"
+        }
+      },
+      "forced_mode_type": {
+        "name": "Tipo de modo forzado",
+        "state": {
+          "target_soc":       "SOC objetivo",
+          "duration":         "Duración",
+          "soc_and_duration": "SOC + Duración"
+        }
+      }
+    },
+    "button": {
+      "reset_gateway": { "name": "Reiniciar gateway" },
+      "auto_mode":     { "name": "Administrado por batería" }
+    }
   }
 }

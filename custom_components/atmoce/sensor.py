@@ -39,7 +39,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="grid_voltage",
         data_key="grid_voltage",
-        name="Grid Voltage",
+        translation_key="grid_voltage",
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
@@ -48,7 +48,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="grid_current",
         data_key="grid_current",
-        name="Grid Current",
+        translation_key="grid_current",
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -57,7 +57,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="grid_power",
         data_key="grid_power",
-        name="Grid Power",
+        translation_key="grid_power",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -66,7 +66,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="grid_energy_daily",
         data_key="grid_energy_daily",
-        name="Grid Energy Daily",
+        translation_key="grid_energy_daily",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -75,7 +75,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="grid_energy_total",
         data_key="grid_energy_total",
-        name="Grid Energy Total",
+        translation_key="grid_energy_total",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -84,7 +84,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="elec_sales_daily",
         data_key="elec_sales_daily",
-        name="Electricity Sold Daily",
+        translation_key="elec_sales_daily",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -93,7 +93,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="elec_sales_total",
         data_key="elec_sales_total",
-        name="Electricity Sold Total",
+        translation_key="elec_sales_total",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -103,7 +103,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="pv_power",
         data_key="pv_power",
-        name="PV Power",
+        translation_key="pv_power",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -112,7 +112,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="pv_energy_daily",
         data_key="pv_energy_daily",
-        name="PV Energy Daily",
+        translation_key="pv_energy_daily",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -121,7 +121,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="pv_energy_total",
         data_key="pv_energy_total",
-        name="PV Energy Total",
+        translation_key="pv_energy_total",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -130,7 +130,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="pv_self_consumption_rate",
         data_key="pv_self_consumption_rate",
-        name="PV Self Consumption Rate",
+        translation_key="pv_self_consumption_rate",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         suggested_display_precision=1,
@@ -140,7 +140,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="battery_soc",
         data_key="battery_soc",
-        name="Battery SOC",
+        translation_key="battery_soc",
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -149,7 +149,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="battery_power",
         data_key="battery_power",
-        name="Battery Power",
+        translation_key="battery_power",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -158,21 +158,21 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="battery_status",
         data_key="battery_status",
-        name="Battery Status",
+        translation_key="battery_status",
         icon="mdi:battery-charging",
         value_map={1: "charging", 2: "discharging", 99: "idle"},
     ),
     AtmoceeSensorDescription(
         key="battery_mode",
         data_key="battery_mode",
-        name="Battery Operating Mode",
+        translation_key="battery_mode",
         icon="mdi:battery-sync",
         value_map={1: "self_consumption", 2: "tou", 10: "remote_control"},
     ),
     AtmoceeSensorDescription(
         key="battery_dispatch_power",
         data_key="battery_dispatch_power",
-        name="Battery Dispatch Power",
+        translation_key="battery_dispatch_power",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -181,7 +181,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="battery_charged_daily",
         data_key="battery_charged_daily",
-        name="Battery Charged Daily",
+        translation_key="battery_charged_daily",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -190,7 +190,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="battery_discharged_daily",
         data_key="battery_discharged_daily",
-        name="Battery Discharged Daily",
+        translation_key="battery_discharged_daily",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -199,7 +199,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="battery_charged_total",
         data_key="battery_charged_total",
-        name="Battery Charged Total",
+        translation_key="battery_charged_total",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -208,7 +208,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="battery_discharged_total",
         data_key="battery_discharged_total",
-        name="Battery Discharged Total",
+        translation_key="battery_discharged_total",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -217,7 +217,7 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="autonomy_hours",
         data_key="autonomy_hours",
-        name="Battery Autonomy",
+        translation_key="autonomy_hours",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTime.HOURS,
         suggested_display_precision=1,
@@ -227,20 +227,20 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
     AtmoceeSensorDescription(
         key="station_status",
         data_key="station_status",
-        name="Station Status",
+        translation_key="station_status",
         icon="mdi:solar-power-variant",
         value_map={0: "normal", 1: "fault"},
     ),
     AtmoceeSensorDescription(
         key="active_source",
         data_key="active_source",
-        name="Active Data Source",
+        translation_key="active_source",
         icon="mdi:connection",
     ),
     AtmoceeSensorDescription(
         key="connection_errors",
         data_key="connection_errors",
-        name="Connection Errors",
+        translation_key="connection_errors",
         state_class=SensorStateClass.TOTAL_INCREASING,
         icon="mdi:alert-network",
     ),

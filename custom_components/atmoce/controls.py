@@ -34,7 +34,7 @@ class AtmoceRemoteControlSwitch(CoordinatorEntity[AtmoceCoordinator], SwitchEnti
     """Switch to enable/disable remote Modbus control of the battery."""
 
     _attr_has_entity_name = True
-    _attr_name = "Remote Control"
+    _attr_translation_key = "remote_control"
     _attr_icon = "mdi:remote"
 
     def __init__(self, coordinator: AtmoceCoordinator) -> None:
@@ -63,10 +63,9 @@ class AtmoceNumber(CoordinatorEntity[AtmoceCoordinator], NumberEntity):
     _attr_has_entity_name = True
     _attr_mode = NumberMode.BOX
 
-    def __init__(self, coordinator: AtmoceCoordinator, key: str, name: str) -> None:
+    def __init__(self, coordinator: AtmoceCoordinator, key: str) -> None:
         super().__init__(coordinator)
         self._key = key
-        self._attr_name = name
         self._attr_unique_id = f"{coordinator.serial_number}_{key}"
         self._attr_device_info = _device_info(coordinator)
 
@@ -81,9 +80,10 @@ class AtmoceTargetSOC(AtmoceNumber):
     _attr_native_step = 1
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_icon = "mdi:battery-arrow-up"
+    _attr_translation_key = "forced_target_soc"
 
     def __init__(self, coordinator: AtmoceCoordinator) -> None:
-        super().__init__(coordinator, "forced_target_soc", "Forced Target SOC")
+        super().__init__(coordinator, "forced_target_soc")
 
     async def async_set_native_value(self, value: float) -> None:
         await self.coordinator.async_set_forced_target_soc(int(value))
@@ -96,9 +96,10 @@ class AtmoceForcedDuration(AtmoceNumber):
     _attr_native_step = 1
     _attr_native_unit_of_measurement = UnitOfTime.MINUTES
     _attr_icon = "mdi:timer-outline"
+    _attr_translation_key = "forced_duration"
 
     def __init__(self, coordinator: AtmoceCoordinator) -> None:
-        super().__init__(coordinator, "forced_duration", "Forced Duration")
+        super().__init__(coordinator, "forced_duration")
 
     async def async_set_native_value(self, value: float) -> None:
         await self.coordinator.async_set_forced_duration(int(value))
@@ -110,9 +111,10 @@ class AtmoceForcedPower(AtmoceNumber):
     _attr_native_step = 0.1
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_icon = "mdi:flash"
+    _attr_translation_key = "forced_power"
 
     def __init__(self, coordinator: AtmoceCoordinator) -> None:
-        super().__init__(coordinator, "forced_power", "Forced Power")
+        super().__init__(coordinator, "forced_power")
         # Max from battery catalogue
         self._attr_native_max_value = coordinator.max_charge_kw
 
@@ -125,9 +127,10 @@ class AtmoceDispatchPower(AtmoceNumber):
     _attr_native_step = 0.05
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_icon = "mdi:battery-arrow-down-outline"
+    _attr_translation_key = "dispatch_power"
 
     def __init__(self, coordinator: AtmoceCoordinator) -> None:
-        super().__init__(coordinator, "battery_dispatch_power", "Dispatch Power")
+        super().__init__(coordinator, "battery_dispatch_power")
         self._attr_native_min_value = -coordinator.max_charge_kw
         self._attr_native_max_value = coordinator.max_discharge_kw
 
@@ -149,14 +152,14 @@ class AtmoceForcedCommandSelect(CoordinatorEntity[AtmoceCoordinator], SelectEnti
     """Select forced charge / discharge / auto mode."""
 
     _attr_has_entity_name = True
-    _attr_name = "Battery Command"
+    _attr_translation_key = "battery_command"
     _attr_icon = "mdi:battery-sync"
-    _attr_options = ["Forced charge", "Forced discharge", "Battery managed"]
+    _attr_options = ["forced_charge", "forced_discharge", "battery_managed"]
 
     _CMD_TO_OPTION = {
-        FORCED_CMD_CHARGE:    "Forced charge",
-        FORCED_CMD_DISCHARGE: "Forced discharge",
-        FORCED_CMD_AUTO:      "Battery managed",
+        FORCED_CMD_CHARGE:    "forced_charge",
+        FORCED_CMD_DISCHARGE: "forced_discharge",
+        FORCED_CMD_AUTO:      "battery_managed",
     }
     _OPTION_TO_CMD = {v: k for k, v in _CMD_TO_OPTION.items()}
 
@@ -180,14 +183,14 @@ class AtmoceForcedModeSelect(CoordinatorEntity[AtmoceCoordinator], SelectEntity)
     """Select how forced mode is measured: SOC, duration, or both."""
 
     _attr_has_entity_name = True
-    _attr_name = "Forced Mode Type"
+    _attr_translation_key = "forced_mode_type"
     _attr_icon = "mdi:tune"
-    _attr_options = ["Target SOC", "Duration", "SOC + Duration"]
+    _attr_options = ["target_soc", "duration", "soc_and_duration"]
 
     _MODE_TO_OPTION = {
-        FORCED_MODE_SOC:      "Target SOC",
-        FORCED_MODE_DURATION: "Duration",
-        FORCED_MODE_BOTH:     "SOC + Duration",
+        FORCED_MODE_SOC:      "target_soc",
+        FORCED_MODE_DURATION: "duration",
+        FORCED_MODE_BOTH:     "soc_and_duration",
     }
     _OPTION_TO_MODE = {v: k for k, v in _MODE_TO_OPTION.items()}
 
@@ -215,7 +218,7 @@ class AtmoceResetButton(CoordinatorEntity[AtmoceCoordinator], ButtonEntity):
     """Button to reset the Atmoce gateway."""
 
     _attr_has_entity_name = True
-    _attr_name = "Reset Gateway"
+    _attr_translation_key = "reset_gateway"
     _attr_icon = "mdi:restart"
 
     def __init__(self, coordinator: AtmoceCoordinator) -> None:
@@ -231,7 +234,7 @@ class AtmoceAutoModeButton(CoordinatorEntity[AtmoceCoordinator], ButtonEntity):
     """Shortcut button: immediately return battery to self-managed mode."""
 
     _attr_has_entity_name = True
-    _attr_name = "Administrado por batería"
+    _attr_translation_key = "auto_mode"
     _attr_icon = "mdi:battery-heart-variant"
 
     def __init__(self, coordinator: AtmoceCoordinator) -> None:

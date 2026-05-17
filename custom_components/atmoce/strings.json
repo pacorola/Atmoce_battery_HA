@@ -71,5 +71,84 @@
     "error": {
       "cloud_credentials_required": "Both app_key and app_secret are required when Cloud fallback is enabled."
     }
+  },
+  "entity": {
+    "sensor": {
+      "grid_voltage":             { "name": "Grid Voltage" },
+      "grid_current":             { "name": "Grid Current" },
+      "grid_power":               { "name": "Grid Power" },
+      "grid_energy_daily":        { "name": "Grid Energy Daily" },
+      "grid_energy_total":        { "name": "Grid Energy Total" },
+      "elec_sales_daily":         { "name": "Electricity Sold Daily" },
+      "elec_sales_total":         { "name": "Electricity Sold Total" },
+      "pv_power":                 { "name": "PV Power" },
+      "pv_energy_daily":          { "name": "PV Energy Daily" },
+      "pv_energy_total":          { "name": "PV Energy Total" },
+      "pv_self_consumption_rate": { "name": "PV Self-Consumption Rate" },
+      "battery_soc":              { "name": "Battery SOC" },
+      "battery_power":            { "name": "Battery Power" },
+      "battery_status": {
+        "name": "Battery Status",
+        "state": {
+          "charging":    "Charging",
+          "discharging": "Discharging",
+          "idle":        "Idle"
+        }
+      },
+      "battery_mode": {
+        "name": "Battery Operating Mode",
+        "state": {
+          "self_consumption": "Self-Consumption",
+          "tou":              "Time of Use",
+          "remote_control":   "Remote Control"
+        }
+      },
+      "battery_dispatch_power":   { "name": "Battery Dispatch Power" },
+      "battery_charged_daily":    { "name": "Battery Charged Daily" },
+      "battery_discharged_daily": { "name": "Battery Discharged Daily" },
+      "battery_charged_total":    { "name": "Battery Charged Total" },
+      "battery_discharged_total": { "name": "Battery Discharged Total" },
+      "autonomy_hours":           { "name": "Battery Autonomy" },
+      "station_status": {
+        "name": "Station Status",
+        "state": {
+          "normal": "Normal",
+          "fault":  "Fault"
+        }
+      },
+      "active_source":            { "name": "Active Data Source" },
+      "connection_errors":        { "name": "Connection Errors" }
+    },
+    "switch": {
+      "remote_control": { "name": "Remote Control" }
+    },
+    "number": {
+      "forced_target_soc": { "name": "Forced Target SOC" },
+      "forced_duration":   { "name": "Forced Duration" },
+      "forced_power":      { "name": "Forced Power" },
+      "dispatch_power":    { "name": "Dispatch Power" }
+    },
+    "select": {
+      "battery_command": {
+        "name": "Battery Command",
+        "state": {
+          "forced_charge":    "Forced Charge",
+          "forced_discharge": "Forced Discharge",
+          "battery_managed":  "Battery Managed"
+        }
+      },
+      "forced_mode_type": {
+        "name": "Forced Mode Type",
+        "state": {
+          "target_soc":       "Target SOC",
+          "duration":         "Duration",
+          "soc_and_duration": "SOC + Duration"
+        }
+      }
+    },
+    "button": {
+      "reset_gateway": { "name": "Reset Gateway" },
+      "auto_mode":     { "name": "Battery Auto Mode" }
+    }
   }
 }
