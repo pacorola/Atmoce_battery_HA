@@ -12,12 +12,19 @@ from homeassistant.const import UnitOfPower, UnitOfTime, PERCENTAGE
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    END_OF_CHARGE_SOC_MAX,
+    END_OF_CHARGE_SOC_MIN,
+    END_OF_DISCHARGE_SOC_MAX,
+    END_OF_DISCHARGE_SOC_MIN,
     FORCED_CMD_AUTO,
     FORCED_CMD_CHARGE,
     FORCED_CMD_DISCHARGE,
     FORCED_MODE_BOTH,
     FORCED_MODE_DURATION,
     FORCED_MODE_SOC,
+    KEY_BATTERY_RESERVED_SOC,
+    KEY_END_OF_CHARGE_SOC,
+    KEY_END_OF_DISCHARGE_SOC,
 )
 from .coordinator import AtmoceCoordinator
 from .sensor import _device_info
@@ -139,6 +146,71 @@ class AtmoceDispatchPower(AtmoceNumber):
     async def async_set_native_value(self, value: float) -> None:
         await self.coordinator.async_set_dispatch_power(int(value * 1000))
         await self.coordinator.async_request_refresh()
+
+
+# ── Cloud-only SOC limits ─────────────────────────────────────────────────────
+# These map to the charge / discharge / safety-reserve limits editable in the
+# ATMOZEN app. They are NOT available over Modbus, so they are read and written
+# through the Cloud API and are only available when Cloud control is enabled.
+
+class AtmoceCloudSOCNumber(AtmoceNumber):
+    """Base for a battery SOC limit backed by the Cloud API."""
+
+    _attr_native_step = 1
+    _attr_native_unit_of_measurement = PERCENTAGE
+
+    @property
+    def available(self) -> bool:
+        # Writing (and reading) these requires the Cloud connection.
+        return super().available and self.coordinator.cloud_enabled
+
+    async def async_set_native_value(self, value: float) -> None:
+        await self.coordinator.async_set_cloud_soc_limit(self._key, int(value))
+
+
+class AtmoceEndOfChargeSOC(AtmoceCloudSOCNumber):
+    """Charge limit — the SOC at which charging stops (endOfChargeSOC)."""
+
+    _attr_native_min_value = END_OF_CHARGE_SOC_MIN
+    _attr_native_max_value = END_OF_CHARGE_SOC_MAX
+    _attr_icon = "mdi:battery-high"
+
+    def __init__(self, coordinator: AtmoceCoordinator) -> None:
+        super().__init__(coordinator, KEY_END_OF_CHARGE_SOC, "Charge Limit SOC")
+
+
+class AtmoceEndOfDischargeSOC(AtmoceCloudSOCNumber):
+    """Discharge limit — the SOC at which discharging stops (endOfDischargeSOC)."""
+
+    _attr_native_min_value = END_OF_DISCHARGE_SOC_MIN
+    _attr_native_max_value = END_OF_DISCHARGE_SOC_MAX
+    _attr_icon = "mdi:battery-low"
+
+    def __init__(self, coordinator: AtmoceCoordinator) -> None:
+        super().__init__(coordinator, KEY_END_OF_DISCHARGE_SOC, "Discharge Limit SOC")
+
+
+class AtmoceBatteryReservedSOC(AtmoceCloudSOCNumber):
+    """Safety/backup reserve — battery stops discharging here except on a grid outage.
+
+    Valid range is [endOfDischargeSOC, endOfChargeSOC]; the bounds follow the two
+    other limits dynamically.
+    """
+
+    _attr_icon = "mdi:battery-lock"
+
+    def __init__(self, coordinator: AtmoceCoordinator) -> None:
+        super().__init__(coordinator, KEY_BATTERY_RESERVED_SOC, "Backup Reserve SOC")
+
+    @property
+    def native_min_value(self) -> float:
+        low = self.coordinator.data.get(KEY_END_OF_DISCHARGE_SOC)
+        return float(low) if low is not None else float(END_OF_DISCHARGE_SOC_MIN)
+
+    @property
+    def native_max_value(self) -> float:
+        high = self.coordinator.data.get(KEY_END_OF_CHARGE_SOC)
+        return float(high) if high is not None else float(END_OF_CHARGE_SOC_MAX)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

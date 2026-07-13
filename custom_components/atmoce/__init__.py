@@ -30,6 +30,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Load the Cloud-only battery SOC limits in the background (won't block setup).
+    if coordinator.cloud_enabled:
+        entry.async_create_background_task(
+            hass,
+            coordinator.async_load_cloud_soc_limits(),
+            "atmoce_cloud_soc_load",
+        )
+
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
 

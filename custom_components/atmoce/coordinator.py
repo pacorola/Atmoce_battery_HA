@@ -8,9 +8,13 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    CLOUD_PARAM_BATTERY_RESERVED_SOC,
+    CLOUD_PARAM_END_OF_CHARGE_SOC,
+    CLOUD_PARAM_END_OF_DISCHARGE_SOC,
     CONF_BATTERY_MODEL,
     CONF_CAPACITY_KWH,
     CONF_CHARGE_KW,
@@ -24,6 +28,9 @@ from .const import (
     CONF_SLAVE,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    KEY_BATTERY_RESERVED_SOC,
+    KEY_END_OF_CHARGE_SOC,
+    KEY_END_OF_DISCHARGE_SOC,
     MODBUS_RETRY_COUNT,
     SOURCE_CLOUD,
     SOURCE_MODBUS,
@@ -36,6 +43,14 @@ _LOGGER = logging.getLogger(__name__)
 
 # Rolling window for autonomy calculation (last N data points ≈ last 2h at 10s)
 _CONSUMPTION_WINDOW = 720
+
+# Cloud-only battery SOC limits: coordinator data key -> Cloud API paramCode.
+# These are not available over Modbus, so they are read/written via the Cloud API.
+_CLOUD_SOC_PARAMS: dict[str, str] = {
+    KEY_END_OF_CHARGE_SOC:    CLOUD_PARAM_END_OF_CHARGE_SOC,
+    KEY_END_OF_DISCHARGE_SOC: CLOUD_PARAM_END_OF_DISCHARGE_SOC,
+    KEY_BATTERY_RESERVED_SOC: CLOUD_PARAM_BATTERY_RESERVED_SOC,
+}
 
 
 class AtmoceCoordinator(DataUpdateCoordinator):
@@ -64,11 +79,17 @@ class AtmoceCoordinator(DataUpdateCoordinator):
             cfg.get(CONF_SLAVE, 1),
         )
 
-        # Cloud fallback
+        # Cloud fallback / control
         self._cloud_enabled: bool = cfg.get(CONF_CLOUD_ENABLED, False)
         self._cloud_app_key: str = cfg.get(CONF_CLOUD_APP_KEY, "")
         self._cloud_app_secret: str = cfg.get(CONF_CLOUD_APP_SECRET, "")
         self._retry_count: int = cfg.get(CONF_RETRY_COUNT, MODBUS_RETRY_COUNT)
+
+        # Persistent Cloud client (lazily created) so the session token is reused
+        # across fallback polls and control calls.
+        self._cloud_client: Any = None
+        # Cloud-only SOC limits, kept across Modbus polls (Modbus can't provide them)
+        self._cloud_params: dict[str, Any] = {}
 
         # State tracking
         self._modbus_failures: int = 0
@@ -91,6 +112,11 @@ class AtmoceCoordinator(DataUpdateCoordinator):
     @property
     def connection_errors(self) -> int:
         return self._connection_errors
+
+    @property
+    def cloud_enabled(self) -> bool:
+        """Whether Cloud control is available (required for the SOC limits)."""
+        return self._cloud_enabled
 
     # ── Main update loop ──────────────────────────────────────────────────────
     async def _async_update_data(self) -> dict[str, Any]:
@@ -128,6 +154,9 @@ class AtmoceCoordinator(DataUpdateCoordinator):
         raw["connection_errors"] = self._connection_errors
         raw = self._compute_derived(raw)
 
+        # Re-inject Cloud-only SOC limits (Modbus polls never carry these keys).
+        raw.update(self._cloud_params)
+
         return raw
 
     # ── Modbus fetch ──────────────────────────────────────────────────────────
@@ -147,14 +176,21 @@ class AtmoceCoordinator(DataUpdateCoordinator):
 
         return data
 
-    # ── Cloud fetch ───────────────────────────────────────────────────────────
+    # ── Cloud client ──────────────────────────────────────────────────────────
+    def _get_cloud_client(self) -> Any:
+        """Return a persistent Cloud client, creating it on first use."""
+        if self._cloud_client is None:
+            # Lazy import to avoid the dependency when Cloud is disabled
+            from .cloud_client import AtmoceCloudClient  # noqa: PLC0415
+
+            self._cloud_client = AtmoceCloudClient(
+                self._cloud_app_key, self._cloud_app_secret
+            )
+        return self._cloud_client
+
     async def _fetch_cloud(self) -> dict[str, Any]:
         """Fetch data from Atmoce Cloud API (read-only monitoring fallback)."""
-        # Lazy import to avoid dependency when Cloud is disabled
-        from .cloud_client import AtmoceCloudClient  # noqa: PLC0415
-
-        client = AtmoceCloudClient(self._cloud_app_key, self._cloud_app_secret)
-        return await client.async_fetch_site_data(self.serial_number)
+        return await self._get_cloud_client().async_fetch_site_data(self.serial_number)
 
     # ── Computed / derived sensors ────────────────────────────────────────────
     def _compute_derived(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -232,3 +268,56 @@ class AtmoceCoordinator(DataUpdateCoordinator):
     async def _ensure_modbus(self) -> None:
         if not self._modbus.connected:
             await self._modbus.async_connect()
+
+    # ── Cloud-only SOC limits (charge / discharge / reserve) ────────────────────
+    async def async_load_cloud_soc_limits(self) -> None:
+        """Read the Cloud-only battery SOC limits and cache them.
+
+        Best-effort: called once at setup (and after a write). Failures are logged
+        and leave the values unknown rather than breaking the integration.
+        """
+        if not self._cloud_enabled:
+            return
+        try:
+            values = await self._get_cloud_client().async_read_params(
+                self.serial_number, list(_CLOUD_SOC_PARAMS.values())
+            )
+        except (ConnectionError, OSError, asyncio.TimeoutError, ValueError, PermissionError) as exc:
+            _LOGGER.warning("Could not read Cloud SOC limits: %s", exc)
+            return
+
+        for key, param_code in _CLOUD_SOC_PARAMS.items():
+            raw = values.get(param_code)
+            if raw is not None:
+                try:
+                    self._cloud_params[key] = int(float(raw))
+                except (TypeError, ValueError):
+                    self._cloud_params[key] = raw
+
+        # Push the cached limits to entities without triggering a Modbus poll.
+        if self.data is not None:
+            self.async_set_updated_data({**self.data, **self._cloud_params})
+
+    async def async_set_cloud_soc_limit(self, key: str, value: int) -> None:
+        """Write a Cloud-only battery SOC limit via the Cloud API.
+
+        Only available when Cloud is enabled. Updates the cached value optimistically
+        on success so the entity reflects the change immediately.
+        """
+        if not self._cloud_enabled:
+            raise HomeAssistantError(
+                "This setting requires the Atmoce Cloud to be enabled with control "
+                "permissions. Enable it in the integration options."
+            )
+        param_code = _CLOUD_SOC_PARAMS[key]
+        try:
+            await self._get_cloud_client().async_set_param(
+                self.serial_number, param_code, value
+            )
+        except (ConnectionError, OSError, asyncio.TimeoutError, ValueError, PermissionError) as exc:
+            raise HomeAssistantError(f"Cloud write failed for {key}: {exc}") from exc
+
+        # Optimistic update; the next load reconciles with the gateway.
+        self._cloud_params[key] = value
+        if self.data is not None:
+            self.async_set_updated_data({**self.data, **self._cloud_params})

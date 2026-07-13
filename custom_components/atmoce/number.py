@@ -5,10 +5,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import AtmoceCoordinator
 from .controls import (
-    AtmoceTargetSOC,
+    AtmoceBatteryReservedSOC,
+    AtmoceDispatchPower,
+    AtmoceEndOfChargeSOC,
+    AtmoceEndOfDischargeSOC,
     AtmoceForcedDuration,
     AtmoceForcedPower,
-    AtmoceDispatchPower,
+    AtmoceTargetSOC,
 )
 
 
@@ -21,4 +24,8 @@ async def async_setup_entry(
         AtmoceForcedDuration(coordinator),
         AtmoceForcedPower(coordinator),
         AtmoceDispatchPower(coordinator),
+        # Cloud-only SOC limits (charge / discharge / backup reserve)
+        AtmoceEndOfChargeSOC(coordinator),
+        AtmoceEndOfDischargeSOC(coordinator),
+        AtmoceBatteryReservedSOC(coordinator),
     ])

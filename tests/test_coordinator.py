@@ -1,8 +1,15 @@
 """Tests for AtmoceCoordinator computed sensors and control methods."""
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from homeassistant.exceptions import HomeAssistantError
+
+from custom_components.atmoce.const import (
+    KEY_BATTERY_RESERVED_SOC,
+    KEY_END_OF_CHARGE_SOC,
+    KEY_END_OF_DISCHARGE_SOC,
+)
 from custom_components.atmoce.coordinator import AtmoceCoordinator
 
 
@@ -188,3 +195,72 @@ class TestControlMethods:
     async def test_reset_gateway(self, coordinator):
         await coordinator.async_reset_gateway()
         coordinator._modbus.async_reset_gateway.assert_awaited_once()
+
+
+class TestCloudSOCLimits:
+    """Tests for the Cloud-only battery SOC limit read/write methods."""
+
+    @pytest.mark.asyncio
+    async def test_set_requires_cloud_enabled(self, coordinator):
+        # Cloud is disabled in the default fixture.
+        with pytest.raises(HomeAssistantError, match="Cloud"):
+            await coordinator.async_set_cloud_soc_limit(KEY_END_OF_CHARGE_SOC, 90)
+
+    @pytest.mark.asyncio
+    async def test_set_delegates_to_cloud_client(self, coordinator):
+        coordinator._cloud_enabled = True
+        cloud = MagicMock()
+        cloud.async_set_param = AsyncMock(return_value=True)
+        coordinator._cloud_client = cloud
+
+        await coordinator.async_set_cloud_soc_limit(KEY_END_OF_CHARGE_SOC, 90)
+
+        cloud.async_set_param.assert_awaited_once_with(
+            "SN123456", "endOfChargeSOC", 90
+        )
+        # Optimistic cache update
+        assert coordinator._cloud_params[KEY_END_OF_CHARGE_SOC] == 90
+
+    @pytest.mark.asyncio
+    async def test_set_wraps_client_errors(self, coordinator):
+        coordinator._cloud_enabled = True
+        cloud = MagicMock()
+        cloud.async_set_param = AsyncMock(side_effect=ValueError("rejected"))
+        coordinator._cloud_client = cloud
+
+        with pytest.raises(HomeAssistantError, match="Cloud write failed"):
+            await coordinator.async_set_cloud_soc_limit(KEY_END_OF_DISCHARGE_SOC, 10)
+
+    @pytest.mark.asyncio
+    async def test_load_populates_cached_limits(self, coordinator):
+        coordinator._cloud_enabled = True
+        cloud = MagicMock()
+        cloud.async_read_params = AsyncMock(return_value={
+            "endOfChargeSOC": "90",
+            "endOfDischargeSOC": "10",
+            "batteryReservedSOC": "20",
+        })
+        coordinator._cloud_client = cloud
+
+        await coordinator.async_load_cloud_soc_limits()
+
+        assert coordinator._cloud_params[KEY_END_OF_CHARGE_SOC] == 90
+        assert coordinator._cloud_params[KEY_END_OF_DISCHARGE_SOC] == 10
+        assert coordinator._cloud_params[KEY_BATTERY_RESERVED_SOC] == 20
+
+    @pytest.mark.asyncio
+    async def test_load_noop_when_cloud_disabled(self, coordinator):
+        # Cloud disabled → should not touch the client or cache.
+        await coordinator.async_load_cloud_soc_limits()
+        assert coordinator._cloud_params == {}
+
+    @pytest.mark.asyncio
+    async def test_load_tolerates_client_errors(self, coordinator):
+        coordinator._cloud_enabled = True
+        cloud = MagicMock()
+        cloud.async_read_params = AsyncMock(side_effect=ValueError("boom"))
+        coordinator._cloud_client = cloud
+
+        # Must not raise — best-effort load.
+        await coordinator.async_load_cloud_soc_limits()
+        assert coordinator._cloud_params == {}

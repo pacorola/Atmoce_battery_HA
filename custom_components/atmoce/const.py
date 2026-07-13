@@ -81,6 +81,26 @@ REG_FORCED_POWER              = (60314, "uint32", 0.001, "kW",  "Forced charge/d
 REG_DISPATCH_POWER            = (60316, "int32",  1,     "W",   "<0=charge >0=discharge")
 REG_RESET                     = (60400, "uint16", 1,     None,  "Write 0 to reset gateway")
 
+# ── Cloud API control parameters (Cloud API Ref. §7.5 Control Parameters) ─────
+# These battery SOC limits exist ONLY in the Cloud API — the Modbus protocol
+# (V1.2) does not expose them (60200/60202 are read-only power limits and there
+# is no reserved-SOC register). They map to the settings editable in the ATMOZEN
+# app: charge limit, discharge limit and safety/backup reserve level.
+CLOUD_PARAM_END_OF_CHARGE_SOC    = "endOfChargeSOC"      # RW %, range [80,100]
+CLOUD_PARAM_END_OF_DISCHARGE_SOC = "endOfDischargeSOC"   # RW %, range [0,30]
+CLOUD_PARAM_BATTERY_RESERVED_SOC = "batteryReservedSOC"  # RW %, [endOfDischargeSOC, endOfChargeSOC]
+
+# Coordinator data keys for the Cloud SOC limits
+KEY_END_OF_CHARGE_SOC    = "end_of_charge_soc"
+KEY_END_OF_DISCHARGE_SOC = "end_of_discharge_soc"
+KEY_BATTERY_RESERVED_SOC = "battery_reserved_soc"
+
+# Documented SOC ranges (Cloud API Ref. §7.5)
+END_OF_CHARGE_SOC_MIN    = 80
+END_OF_CHARGE_SOC_MAX    = 100
+END_OF_DISCHARGE_SOC_MIN = 0
+END_OF_DISCHARGE_SOC_MAX = 30
+
 # ── Forced command option values ─────────────────────────────────────────────
 FORCED_CMD_CHARGE    = 0
 FORCED_CMD_DISCHARGE = 1

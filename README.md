@@ -9,8 +9,7 @@
 
 Full local control and monitoring of **Atmoce solar + battery systems** via **Modbus TCP**, with an optional read-only Cloud API fallback.
 
-Tested with the **Atmoce MS-7K-U** (7 kWh LFP battery) and compatible with MC100, MC100-T and MG100 gateways. 
-Try on your installation and please report any suggestion or issue at the repository.
+Still under testing with the **Atmoce MS-7K-U** (7 kWh LFP battery). Should be compatible with MC100, MC100-T and MG100 gateways. Try on your installation and please report so any needed fix can be done.
 
 ---
 
@@ -93,6 +92,16 @@ Try on your installation and please report any suggestion or issue at the reposi
 | `select.atmoce_forced_mode_type` | SOC objetivo / Duración / SOC + Duración |
 | `button.atmoce_administrado_por_bateria` | One-tap return to automatic mode |
 | `button.atmoce_reset_gateway` | Reset the Atmoce gateway |
+
+### Battery SOC limits (Cloud only)
+
+These match the charge / discharge / safety-reserve limits editable in the ATMOZEN app. They are **not exposed over Modbus** (the Modbus protocol only offers read-only power limits and no reserve register), so they are read and written through the **Cloud API** and require Cloud to be enabled with an account that has control permissions. Because the Cloud control API is task-based and rate-limited, these values are read once at startup and refreshed after each change rather than polled continuously.
+
+| Entity | Cloud parameter | Description |
+|--------|-----------------|-------------|
+| `number.atmoce_charge_limit_soc` | `endOfChargeSOC` | SOC at which charging stops (80–100 %) |
+| `number.atmoce_discharge_limit_soc` | `endOfDischargeSOC` | SOC at which discharging stops (0–30 %) |
+| `number.atmoce_backup_reserve_soc` | `batteryReservedSOC` | Reserve kept for backup — the battery stops discharging here except during a grid outage (range between the two limits above) |
 
 ---
 
