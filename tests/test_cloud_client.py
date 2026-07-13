@@ -189,8 +189,9 @@ class TestFetchSiteData:
 
 @pytest.fixture(autouse=True)
 def _no_poll_delay():
-    """Remove the inter-poll sleep so control tests run instantly."""
-    with patch.object(cloud_client, "_TASK_POLL_DELAY", 0):
+    """Remove the inter-poll sleeps so control tests run instantly."""
+    with patch.object(cloud_client, "_SET_POLL_DELAY", 0), \
+         patch.object(cloud_client, "_READ_POLL_DELAY", 0):
         yield
 
 

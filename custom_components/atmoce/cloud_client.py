@@ -20,11 +20,15 @@ _PARAM_SET_TASK_URL  = f"{CLOUD_BASE_URL}/device/getParamSettingTask"
 _PARAM_READ_URL      = f"{CLOUD_BASE_URL}/device/paramRead"
 _PARAM_READ_TASK_URL = f"{CLOUD_BASE_URL}/device/getParamReadingTask"
 
-# Task polling — control tasks are executed asynchronously by the gateway, so we
-# submit a task and then poll for its result. Kept small to respect QPS limits
-# (10,000 calls/month, 5 concurrent).
-_TASK_POLL_ATTEMPTS = 6
-_TASK_POLL_DELAY = 1.5  # seconds between polls
+# Task polling — control tasks are executed asynchronously (the cloud has to
+# reach the gateway), so we submit a task and then poll for its result. Reads run
+# in the background at startup so they can afford to wait longer; writes block a
+# user action and update optimistically, so they poll only briefly for
+# confirmation. Kept bounded to respect QPS limits (10,000 calls/month).
+_SET_POLL_ATTEMPTS = 4
+_SET_POLL_DELAY = 1.5    # seconds
+_READ_POLL_ATTEMPTS = 15
+_READ_POLL_DELAY = 2.0   # seconds  → up to ~30 s of patience for the gateway
 
 
 class AtmoceCloudClient:
@@ -126,32 +130,31 @@ class AtmoceCloudClient:
         async with aiohttp.ClientSession(headers=headers) as session:
             resp = await session.post(_PARAM_SET_URL, json=body)
             payload = await resp.json()
+            _LOGGER.debug("paramSet %s=%s response: %s", param_code, value, payload)
             if not payload.get("success"):
                 raise ValueError(f"Cloud paramSet failed: {payload.get('reason')}")
 
-            data = payload.get("data") or {}
-            request_id = data.get("requestId")
-            _LOGGER.debug(
-                "paramSet %s=%s submitted (requestId=%s)", param_code, value, request_id
-            )
+            request_id = (payload.get("data") or {}).get("requestId")
             if not request_id:
                 return False
 
             # Poll the task result to confirm the gateway applied the value.
-            for _ in range(_TASK_POLL_ATTEMPTS):
-                await asyncio.sleep(_TASK_POLL_DELAY)
+            for _ in range(_SET_POLL_ATTEMPTS):
+                await asyncio.sleep(_SET_POLL_DELAY)
                 task = await session.get(
                     _PARAM_SET_TASK_URL, params={"requestId": request_id}
                 )
                 task_payload = await task.json()
-                status = _first_param_status(task_payload, "PSitStatus")
-                if status == 1:
-                    return True
-                if status == 2:
-                    raise ValueError(
-                        f"Cloud paramSet rejected for {param_code} "
-                        f"(requestId={request_id})"
-                    )
+                _LOGGER.debug("getParamSettingTask response: %s", task_payload)
+                for pr in _iter_param_results(task_payload):
+                    status = pr.get("PSitStatus")
+                    if status == 1:
+                        return True
+                    if status == 2:
+                        raise ValueError(
+                            f"Cloud paramSet rejected for {param_code} "
+                            f"(requestId={request_id}, detail={pr.get('paramDetail')})"
+                        )
             _LOGGER.warning(
                 "paramSet %s=%s still pending after polling (requestId=%s)",
                 param_code, value, request_id,
@@ -179,38 +182,52 @@ class AtmoceCloudClient:
         async with aiohttp.ClientSession(headers=headers) as session:
             resp = await session.post(_PARAM_READ_URL, json=body)
             payload = await resp.json()
+            _LOGGER.debug("paramRead %s response: %s", param_codes, payload)
             if not payload.get("success"):
                 raise ValueError(f"Cloud paramRead failed: {payload.get('reason')}")
 
-            data = payload.get("data") or {}
-            request_id = data.get("requestId")
+            request_id = (payload.get("data") or {}).get("requestId")
             if not request_id:
+                _LOGGER.warning("paramRead returned no requestId: %s", payload)
                 return values
 
-            for _ in range(_TASK_POLL_ATTEMPTS):
-                await asyncio.sleep(_TASK_POLL_DELAY)
+            for _ in range(_READ_POLL_ATTEMPTS):
+                await asyncio.sleep(_READ_POLL_DELAY)
                 task = await session.get(
                     _PARAM_READ_TASK_URL, params={"requestId": request_id}
                 )
                 task_payload = await task.json()
+                _LOGGER.debug("getParamReadingTask response: %s", task_payload)
                 pending = False
-                for entry in task_payload.get("data") or []:
-                    for pr in entry.get("paramResults") or []:
-                        code = pr.get("paramCode")
-                        status = pr.get("PReadStatus")
-                        if status == 1 and code:
-                            values[code] = pr.get("paramValue")
-                        elif status == 0:
-                            pending = True
+                for pr in _iter_param_results(task_payload):
+                    code = pr.get("paramCode")
+                    status = pr.get("PReadStatus")
+                    if status == 1 and code:
+                        values[code] = pr.get("paramValue")
+                    elif status in (0, None):
+                        pending = True
                 if values and not pending:
                     break
+        _LOGGER.debug("paramRead resolved values: %s", values)
         return values
 
 
-def _first_param_status(task_payload: dict[str, Any], status_key: str) -> int | None:
-    """Extract the first parameter execution status from a task-result payload."""
-    for entry in task_payload.get("data") or []:
+def _iter_param_results(task_payload: dict[str, Any]):
+    """Yield each paramResults entry from a task-result payload.
+
+    Tolerates ``data`` being either a list of subtask objects or a single object,
+    and the results being under ``paramResults`` (the field seen in the docs).
+    """
+    data = task_payload.get("data")
+    if isinstance(data, dict):
+        entries = [data]
+    elif isinstance(data, list):
+        entries = data
+    else:
+        entries = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
         for pr in entry.get("paramResults") or []:
-            if status_key in pr:
-                return pr.get(status_key)
-    return None
+            if isinstance(pr, dict):
+                yield pr

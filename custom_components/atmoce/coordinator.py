@@ -282,17 +282,26 @@ class AtmoceCoordinator(DataUpdateCoordinator):
             values = await self._get_cloud_client().async_read_params(
                 self.serial_number, list(_CLOUD_SOC_PARAMS.values())
             )
-        except (ConnectionError, OSError, asyncio.TimeoutError, ValueError, PermissionError) as exc:
-            _LOGGER.warning("Could not read Cloud SOC limits: %s", exc)
+        except Exception as exc:  # noqa: BLE001 — best-effort background load
+            _LOGGER.warning("Could not read Cloud SOC limits: %s", exc, exc_info=True)
+            return
+
+        if not values:
+            _LOGGER.warning(
+                "Cloud SOC limits read returned no values (the parameter task may "
+                "still be pending, or the credentials may lack control permissions)"
+            )
             return
 
         for key, param_code in _CLOUD_SOC_PARAMS.items():
             raw = values.get(param_code)
-            if raw is not None:
+            if raw is not None and raw != "":
                 try:
                     self._cloud_params[key] = int(float(raw))
                 except (TypeError, ValueError):
                     self._cloud_params[key] = raw
+
+        _LOGGER.debug("Loaded Cloud SOC limits: %s", self._cloud_params)
 
         # Push the cached limits to entities without triggering a Modbus poll.
         if self.data is not None:
