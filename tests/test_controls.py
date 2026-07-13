@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from custom_components.atmoce.controls import (
-    AtmoceAutoModeButton,
     AtmoceDispatchPower,
     AtmoceForcedCommandSelect,
     AtmoceForcedDuration,
@@ -183,13 +182,16 @@ class TestForcedCommandSelect:
         entity = _make_entity(AtmoceForcedCommandSelect, coord)
         await entity.async_select_option("Forced charge")
         coord.async_set_forced_command.assert_awaited_once_with(FORCED_CMD_CHARGE)
+        # Only "Battery managed" touches remote control
+        coord.async_set_remote_control.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_select_auto(self):
+    async def test_select_auto_also_disables_remote(self):
         coord = _make_coordinator({"forced_cmd": FORCED_CMD_CHARGE})
         entity = _make_entity(AtmoceForcedCommandSelect, coord)
         await entity.async_select_option("Battery managed")
         coord.async_set_forced_command.assert_awaited_once_with(FORCED_CMD_AUTO)
+        coord.async_set_remote_control.assert_awaited_once_with(False)
 
 
 class TestForcedModeSelect:
@@ -224,14 +226,3 @@ class TestResetButton:
         entity = _make_entity(AtmoceResetButton, coord)
         await entity.async_press()
         coord.async_reset_gateway.assert_awaited_once()
-
-
-class TestAutoModeButton:
-    @pytest.mark.asyncio
-    async def test_press_sets_auto_and_disables_remote(self):
-        coord = _make_coordinator()
-        entity = _make_entity(AtmoceAutoModeButton, coord)
-        await entity.async_press()
-        coord.async_set_forced_command.assert_awaited_once_with(FORCED_CMD_AUTO)
-        coord.async_set_remote_control.assert_awaited_once_with(False)
-        coord.async_request_refresh.assert_awaited_once()

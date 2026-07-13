@@ -17,7 +17,7 @@ Still under testing with the **Atmoce MS-7K-U** (7 kWh LFP battery). Should be c
 
 - **27 sensor entities** — grid, PV, battery, system and computed metrics
 - **Full battery control** — force charge/discharge, set target SOC, duration and power
-- **"Administrado por batería" button** — one-tap return to automatic self-managed mode
+- **"Administrado por batería" mode** — one selection returns the battery to automatic self-managed mode (also drops out of remote control)
 - **Battery model selector** in setup — MS-7K-U pre-configured, manual entry for other models
 - **Automatic Modbus→Cloud fallback** (optional) if the gateway is temporarily unreachable
 - **Active data source sensor** — always know whether you are reading Modbus or Cloud
@@ -88,9 +88,8 @@ Still under testing with the **Atmoce MS-7K-U** (7 kWh LFP battery). Should be c
 | `number.atmoce_forced_duration` | Duration for forced operation (0–1440 min) |
 | `number.atmoce_forced_power` | Power for forced charge (0–max charge kW) |
 | `number.atmoce_dispatch_power` | Dispatch power setpoint in kW (negative = charge) |
-| `select.atmoce_battery_command` | Carga forzada / Descarga forzada / Administrado por batería |
+| `select.atmoce_battery_command` | Carga forzada / Descarga forzada / Administrado por batería (this last option also turns Remote Control off) |
 | `select.atmoce_forced_mode_type` | SOC objetivo / Duración / SOC + Duración |
-| `button.atmoce_administrado_por_bateria` | One-tap return to automatic mode |
 | `button.atmoce_reset_gateway` | Reset the Atmoce gateway |
 
 ### Battery SOC limits (Atmoce Cloud login)
@@ -147,9 +146,11 @@ automation:
         entity_id: sensor.atmoce_battery_soc
         above: 80
     action:
-      - service: button.press
+      - service: select.select_option
         target:
-          entity_id: button.atmoce_administrado_por_bateria
+          entity_id: select.atmoce_battery_command
+        data:
+          option: "Administrado por batería"
 ```
 
 ---

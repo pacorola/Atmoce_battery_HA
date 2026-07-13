@@ -246,6 +246,10 @@ class AtmoceForcedCommandSelect(CoordinatorEntity[AtmoceCoordinator], SelectEnti
     async def async_select_option(self, option: str) -> None:
         cmd = self._OPTION_TO_CMD[option]
         await self.coordinator.async_set_forced_command(cmd)
+        # "Battery managed" hands full control back to the battery: besides exiting
+        # forced mode, drop out of remote control so it self-manages (self-use/TOU).
+        if cmd == FORCED_CMD_AUTO:
+            await self.coordinator.async_set_remote_control(False)
         await self.coordinator.async_request_refresh()
 
 
@@ -298,21 +302,3 @@ class AtmoceResetButton(CoordinatorEntity[AtmoceCoordinator], ButtonEntity):
 
     async def async_press(self) -> None:
         await self.coordinator.async_reset_gateway()
-
-
-class AtmoceAutoModeButton(CoordinatorEntity[AtmoceCoordinator], ButtonEntity):
-    """Shortcut button: immediately return battery to self-managed mode."""
-
-    _attr_has_entity_name = True
-    _attr_name = "Administrado por batería"
-    _attr_icon = "mdi:battery-heart-variant"
-
-    def __init__(self, coordinator: AtmoceCoordinator) -> None:
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.serial_number}_auto_mode"
-        self._attr_device_info = _device_info(coordinator)
-
-    async def async_press(self) -> None:
-        await self.coordinator.async_set_forced_command(FORCED_CMD_AUTO)
-        await self.coordinator.async_set_remote_control(False)
-        await self.coordinator.async_request_refresh()
