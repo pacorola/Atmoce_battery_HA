@@ -64,7 +64,9 @@ class AtmoceCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
         self.config_entry = config_entry
-        cfg = config_entry.data
+        # Options (set via the "Configure" dialog) override the initial setup data,
+        # so Cloud credentials/toggles edited after setup take effect.
+        cfg = {**config_entry.data, **(config_entry.options or {})}
 
         # Battery specs (from catalogue or manual)
         self.battery_model: str = cfg.get(CONF_BATTERY_MODEL, "manual")
@@ -81,8 +83,8 @@ class AtmoceCoordinator(DataUpdateCoordinator):
 
         # Cloud fallback / control
         self._cloud_enabled: bool = cfg.get(CONF_CLOUD_ENABLED, False)
-        self._cloud_app_key: str = cfg.get(CONF_CLOUD_APP_KEY, "")
-        self._cloud_app_secret: str = cfg.get(CONF_CLOUD_APP_SECRET, "")
+        self._cloud_app_key: str = (cfg.get(CONF_CLOUD_APP_KEY) or "").strip()
+        self._cloud_app_secret: str = (cfg.get(CONF_CLOUD_APP_SECRET) or "").strip()
         self._retry_count: int = cfg.get(CONF_RETRY_COUNT, MODBUS_RETRY_COUNT)
 
         # Persistent Cloud client (lazily created) so the session token is reused

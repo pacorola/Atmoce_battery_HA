@@ -197,6 +197,38 @@ class TestControlMethods:
         coordinator._modbus.async_reset_gateway.assert_awaited_once()
 
 
+class TestCloudConfigResolution:
+    """Cloud credentials from the options flow must override the initial setup data."""
+
+    def test_options_override_data(self, mock_hass, mock_config_entry):
+        mock_config_entry.data = {
+            **mock_config_entry.data,
+            "cloud_enabled": False,
+            "cloud_app_key": "",
+            "cloud_app_secret": "",
+        }
+        mock_config_entry.options = {
+            "cloud_enabled": True,
+            "cloud_app_key": "  real-key  ",   # whitespace should be stripped
+            "cloud_app_secret": "real-secret",
+        }
+        coord = AtmoceCoordinator(mock_hass, mock_config_entry)
+        assert coord.cloud_enabled is True
+        assert coord._cloud_app_key == "real-key"
+        assert coord._cloud_app_secret == "real-secret"
+
+    def test_data_used_when_no_options(self, mock_hass, mock_config_entry):
+        mock_config_entry.data = {
+            **mock_config_entry.data,
+            "cloud_enabled": True,
+            "cloud_app_key": "data-key",
+            "cloud_app_secret": "data-secret",
+        }
+        mock_config_entry.options = {}
+        coord = AtmoceCoordinator(mock_hass, mock_config_entry)
+        assert coord._cloud_app_key == "data-key"
+
+
 class TestCloudSOCLimits:
     """Tests for the Cloud-only battery SOC limit read/write methods."""
 
