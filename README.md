@@ -93,15 +93,17 @@ Still under testing with the **Atmoce MS-7K-U** (7 kWh LFP battery). Should be c
 | `button.atmoce_administrado_por_bateria` | One-tap return to automatic mode |
 | `button.atmoce_reset_gateway` | Reset the Atmoce gateway |
 
-### Battery SOC limits (Cloud only)
+### Battery SOC limits (Atmoce Cloud login)
 
-These match the charge / discharge / safety-reserve limits editable in the ATMOZEN app. They are **not exposed over Modbus** (the Modbus protocol only offers read-only power limits and no reserve register), so they are read and written through the **Cloud API** and require Cloud to be enabled with an account that has control permissions. Because the Cloud control API is task-based and rate-limited, these values are read once at startup and refreshed after each change rather than polled continuously.
+These match the charge / discharge / safety-reserve limits editable in the ATMOZEN app. They are **not exposed over Modbus** (the Modbus protocol only offers read-only power limits and no reserve register), so they are read and written through the **same private web-portal API the app uses**, signed in with your **normal atmocecloud.com login (email + password)** — no partner API keys required. Enter your login in **Settings → Devices & Services → Atmoce Battery → Configure**. The values are read once at startup and refreshed after each change (no continuous polling). If no login is configured, these three entities stay unavailable and everything else (local Modbus) works normally.
 
-| Entity | Cloud parameter | Description |
-|--------|-----------------|-------------|
-| `number.atmoce_charge_limit_soc` | `endOfChargeSOC` | SOC at which charging stops (80–100 %) |
-| `number.atmoce_discharge_limit_soc` | `endOfDischargeSOC` | SOC at which discharging stops (0–30 %) |
-| `number.atmoce_backup_reserve_soc` | `batteryReservedSOC` | Reserve kept for backup — the battery stops discharging here except during a grid outage (range between the two limits above) |
+| Entity | Portal field | Description |
+|--------|--------------|-------------|
+| `number.atmoce_charge_limit_soc` | `storageChargeCutoffSoc` | SOC at which charging stops (80–100 %) |
+| `number.atmoce_discharge_limit_soc` | `storageDischargeCutoffSoc` | SOC at which discharging stops (0–30 %) |
+| `number.atmoce_backup_reserve_soc` | `backupSoc` | Reserve kept for backup — the battery stops discharging here except during a grid outage (range between the two limits above) |
+
+> This uses an unofficial API and may change if Atmoce updates their portal.
 
 ---
 

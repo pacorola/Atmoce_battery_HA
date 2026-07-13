@@ -148,21 +148,22 @@ class AtmoceDispatchPower(AtmoceNumber):
         await self.coordinator.async_request_refresh()
 
 
-# ── Cloud-only SOC limits ─────────────────────────────────────────────────────
+# ── Battery SOC limits (web portal login) ─────────────────────────────────────
 # These map to the charge / discharge / safety-reserve limits editable in the
 # ATMOZEN app. They are NOT available over Modbus, so they are read and written
-# through the Cloud API and are only available when Cloud control is enabled.
+# through the web-portal private API and are only available when the Atmoce Cloud
+# login (email + password) is configured.
 
 class AtmoceCloudSOCNumber(AtmoceNumber):
-    """Base for a battery SOC limit backed by the Cloud API."""
+    """Base for a battery SOC limit backed by the web-portal login."""
 
     _attr_native_step = 1
     _attr_native_unit_of_measurement = PERCENTAGE
 
     @property
     def available(self) -> bool:
-        # Writing (and reading) these requires the Cloud connection.
-        return super().available and self.coordinator.cloud_enabled
+        # Writing (and reading) these requires the web-portal login.
+        return super().available and self.coordinator.soc_control_available
 
     async def async_set_native_value(self, value: float) -> None:
         await self.coordinator.async_set_cloud_soc_limit(self._key, int(value))

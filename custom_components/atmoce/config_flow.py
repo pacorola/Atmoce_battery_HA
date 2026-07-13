@@ -22,6 +22,8 @@ from .const import (
     CONF_CLOUD_APP_KEY,
     CONF_CLOUD_APP_SECRET,
     CONF_CLOUD_ENABLED,
+    CONF_CLOUD_WEB_EMAIL,
+    CONF_CLOUD_WEB_PASSWORD,
     CONF_DISCHARGE_KW,
     CONF_RETRY_COUNT,
     CONF_SLAVE,
@@ -83,11 +85,18 @@ STEP_MANUAL_BATTERY_SCHEMA = vol.Schema(
 )
 
 # ── Step 3: cloud (optional) ─────────────────────────────────────────────────
+_PASSWORD_SELECTOR = selector.TextSelector(
+    selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+)
+
 STEP_CLOUD_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_CLOUD_ENABLED, default=False): bool,
         vol.Optional(CONF_CLOUD_APP_KEY, default=""): str,
         vol.Optional(CONF_CLOUD_APP_SECRET, default=""): str,
+        # Web-portal login (email + password) — enables the battery SOC limits
+        vol.Optional(CONF_CLOUD_WEB_EMAIL, default=""): str,
+        vol.Optional(CONF_CLOUD_WEB_PASSWORD, default=""): _PASSWORD_SELECTOR,
         vol.Optional(CONF_RETRY_COUNT, default=MODBUS_RETRY_COUNT): vol.All(
             int, vol.Range(min=1, max=20)
         ),
@@ -289,6 +298,14 @@ class AtmoceOptionsFlow(config_entries.OptionsFlow):
                     CONF_CLOUD_APP_SECRET,
                     default=current.get(CONF_CLOUD_APP_SECRET, ""),
                 ): str,
+                vol.Optional(
+                    CONF_CLOUD_WEB_EMAIL,
+                    default=current.get(CONF_CLOUD_WEB_EMAIL, ""),
+                ): str,
+                vol.Optional(
+                    CONF_CLOUD_WEB_PASSWORD,
+                    default=current.get(CONF_CLOUD_WEB_PASSWORD, ""),
+                ): _PASSWORD_SELECTOR,
             }
         )
 

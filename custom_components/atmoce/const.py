@@ -81,21 +81,24 @@ REG_FORCED_POWER              = (60314, "uint32", 0.001, "kW",  "Forced charge/d
 REG_DISPATCH_POWER            = (60316, "int32",  1,     "W",   "<0=charge >0=discharge")
 REG_RESET                     = (60400, "uint16", 1,     None,  "Write 0 to reset gateway")
 
-# ── Cloud API control parameters (Cloud API Ref. §7.5 Control Parameters) ─────
-# These battery SOC limits exist ONLY in the Cloud API — the Modbus protocol
-# (V1.2) does not expose them (60200/60202 are read-only power limits and there
-# is no reserved-SOC register). They map to the settings editable in the ATMOZEN
-# app: charge limit, discharge limit and safety/backup reserve level.
-CLOUD_PARAM_END_OF_CHARGE_SOC    = "endOfChargeSOC"      # RW %, range [80,100]
-CLOUD_PARAM_END_OF_DISCHARGE_SOC = "endOfDischargeSOC"   # RW %, range [0,30]
-CLOUD_PARAM_BATTERY_RESERVED_SOC = "batteryReservedSOC"  # RW %, [endOfDischargeSOC, endOfChargeSOC]
+# ── Battery SOC limits (web portal / private API) ────────────────────────────
+# These battery SOC limits are not exposed over Modbus (60200/60202 are
+# read-only power limits and there is no reserved-SOC register). They are the
+# charge / discharge / backup-reserve limits editable in the ATMOZEN app, and are
+# read/written through the same private API the web portal uses, authenticated
+# with the owner's normal login (email + password) — not the partner Open API.
+#
+# Field names in the storageModel object (POST .../web/storageModel/changeModel):
+WEB_FIELD_CHARGE_CUTOFF_SOC    = "storageChargeCutoffSoc"     # charge limit
+WEB_FIELD_DISCHARGE_CUTOFF_SOC = "storageDischargeCutoffSoc"  # discharge limit
+WEB_FIELD_BACKUP_SOC           = "backupSoc"                  # safety/backup reserve
 
-# Coordinator data keys for the Cloud SOC limits
+# Coordinator data keys for the SOC limits
 KEY_END_OF_CHARGE_SOC    = "end_of_charge_soc"
 KEY_END_OF_DISCHARGE_SOC = "end_of_discharge_soc"
 KEY_BATTERY_RESERVED_SOC = "battery_reserved_soc"
 
-# Documented SOC ranges (Cloud API Ref. §7.5)
+# SOC ranges (charge/discharge per the Modbus/Cloud docs; reserve is dynamic)
 END_OF_CHARGE_SOC_MIN    = 80
 END_OF_CHARGE_SOC_MAX    = 100
 END_OF_DISCHARGE_SOC_MIN = 0
@@ -121,7 +124,12 @@ CONF_DISCHARGE_KW     = "discharge_kw"
 CONF_CLOUD_ENABLED    = "cloud_enabled"
 CONF_CLOUD_APP_KEY    = "cloud_app_key"
 CONF_CLOUD_APP_SECRET = "cloud_app_secret"
+CONF_CLOUD_WEB_EMAIL    = "cloud_web_email"     # atmocecloud.com login (for SOC limits)
+CONF_CLOUD_WEB_PASSWORD = "cloud_web_password"
 CONF_RETRY_COUNT      = "modbus_retry_count"
+
+# Base host for the private web-portal API (login + storageModel)
+CLOUD_WEB_BASE_URL = "https://www.atmocecloud.com"
 
 # ── Active data source ───────────────────────────────────────────────────────
 SOURCE_MODBUS = "Modbus"

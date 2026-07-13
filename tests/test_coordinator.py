@@ -229,50 +229,65 @@ class TestCloudConfigResolution:
         assert coord._cloud_app_key == "data-key"
 
 
+def _web_enable(coordinator, client):
+    """Configure a coordinator with a mocked web client and known station id."""
+    coordinator._web_email = "me@example.com"
+    coordinator._web_password = "secret"
+    coordinator._web_client = client
+    coordinator._station_id = 16078
+
+
 class TestCloudSOCLimits:
-    """Tests for the Cloud-only battery SOC limit read/write methods."""
+    """Tests for the battery SOC limit read/write methods (web portal)."""
 
     @pytest.mark.asyncio
-    async def test_set_requires_cloud_enabled(self, coordinator):
-        # Cloud is disabled in the default fixture.
-        with pytest.raises(HomeAssistantError, match="Cloud"):
+    async def test_set_requires_web_login(self, coordinator):
+        # No web credentials in the default fixture.
+        assert coordinator.soc_control_available is False
+        with pytest.raises(HomeAssistantError, match="login"):
             await coordinator.async_set_cloud_soc_limit(KEY_END_OF_CHARGE_SOC, 90)
 
     @pytest.mark.asyncio
-    async def test_set_delegates_to_cloud_client(self, coordinator):
-        coordinator._cloud_enabled = True
-        cloud = MagicMock()
-        cloud.async_set_param = AsyncMock(return_value=True)
-        coordinator._cloud_client = cloud
+    async def test_set_delegates_to_web_client(self, coordinator):
+        web = MagicMock()
+        web.async_change_model = AsyncMock()
+        _web_enable(coordinator, web)
 
         await coordinator.async_set_cloud_soc_limit(KEY_END_OF_CHARGE_SOC, 90)
 
-        cloud.async_set_param.assert_awaited_once_with(
-            "SN123456", "endOfChargeSOC", 90
+        web.async_change_model.assert_awaited_once_with(
+            16078, {"storageChargeCutoffSoc": 90}
         )
-        # Optimistic cache update
         assert coordinator._cloud_params[KEY_END_OF_CHARGE_SOC] == 90
 
     @pytest.mark.asyncio
+    async def test_set_maps_backup_reserve_field(self, coordinator):
+        web = MagicMock()
+        web.async_change_model = AsyncMock()
+        _web_enable(coordinator, web)
+
+        await coordinator.async_set_cloud_soc_limit(KEY_BATTERY_RESERVED_SOC, 20)
+
+        web.async_change_model.assert_awaited_once_with(16078, {"backupSoc": 20})
+
+    @pytest.mark.asyncio
     async def test_set_wraps_client_errors(self, coordinator):
-        coordinator._cloud_enabled = True
-        cloud = MagicMock()
-        cloud.async_set_param = AsyncMock(side_effect=ValueError("rejected"))
-        coordinator._cloud_client = cloud
+        web = MagicMock()
+        web.async_change_model = AsyncMock(side_effect=ValueError("denied"))
+        _web_enable(coordinator, web)
 
         with pytest.raises(HomeAssistantError, match="Cloud write failed"):
             await coordinator.async_set_cloud_soc_limit(KEY_END_OF_DISCHARGE_SOC, 10)
 
     @pytest.mark.asyncio
     async def test_load_populates_cached_limits(self, coordinator):
-        coordinator._cloud_enabled = True
-        cloud = MagicMock()
-        cloud.async_read_params = AsyncMock(return_value={
-            "endOfChargeSOC": "90",
-            "endOfDischargeSOC": "10",
-            "batteryReservedSOC": "20",
+        web = MagicMock()
+        web.async_read_model = AsyncMock(return_value={
+            "storageChargeCutoffSoc": "90",
+            "storageDischargeCutoffSoc": "10",
+            "backupSoc": "20",
         })
-        coordinator._cloud_client = cloud
+        _web_enable(coordinator, web)
 
         await coordinator.async_load_cloud_soc_limits()
 
@@ -281,17 +296,15 @@ class TestCloudSOCLimits:
         assert coordinator._cloud_params[KEY_BATTERY_RESERVED_SOC] == 20
 
     @pytest.mark.asyncio
-    async def test_load_noop_when_cloud_disabled(self, coordinator):
-        # Cloud disabled → should not touch the client or cache.
+    async def test_load_noop_without_web_login(self, coordinator):
         await coordinator.async_load_cloud_soc_limits()
         assert coordinator._cloud_params == {}
 
     @pytest.mark.asyncio
     async def test_load_tolerates_client_errors(self, coordinator):
-        coordinator._cloud_enabled = True
-        cloud = MagicMock()
-        cloud.async_read_params = AsyncMock(side_effect=ValueError("boom"))
-        coordinator._cloud_client = cloud
+        web = MagicMock()
+        web.async_read_model = AsyncMock(side_effect=ValueError("boom"))
+        _web_enable(coordinator, web)
 
         # Must not raise — best-effort load.
         await coordinator.async_load_cloud_soc_limits()

@@ -31,11 +31,13 @@
       },
       "cloud": {
         "title": "Atmoce Cloud (optional)",
-        "description": "Cloud is used as a read-only fallback if Modbus is unavailable. Leave disabled if you only use local access.",
+        "description": "Two independent, optional features. Monitoring fallback (app_key/app_secret) needs partner Open API keys from Atmoce. Battery SOC limits (charge/discharge/backup reserve) only need your normal atmocecloud.com login (email + password).",
         "data": {
-          "cloud_enabled": "Enable Cloud fallback",
-          "cloud_app_key": "API app_key",
-          "cloud_app_secret": "API app_secret",
+          "cloud_enabled": "Enable Cloud monitoring fallback",
+          "cloud_app_key": "API app_key (Open API, optional)",
+          "cloud_app_secret": "API app_secret (Open API, optional)",
+          "cloud_web_email": "atmocecloud.com email (for battery SOC limits)",
+          "cloud_web_password": "atmocecloud.com password",
           "modbus_retry_count": "Modbus failures before Cloud fallback"
         }
       },
@@ -62,9 +64,11 @@
         "title": "Atmoce options",
         "data": {
           "modbus_retry_count": "Modbus failures before Cloud fallback",
-          "cloud_enabled": "Enable Cloud fallback",
-          "cloud_app_key": "API app_key",
-          "cloud_app_secret": "API app_secret"
+          "cloud_enabled": "Enable Cloud monitoring fallback",
+          "cloud_app_key": "API app_key (Open API, optional)",
+          "cloud_app_secret": "API app_secret (Open API, optional)",
+          "cloud_web_email": "atmocecloud.com email (for battery SOC limits)",
+          "cloud_web_password": "atmocecloud.com password"
         }
       }
     },
