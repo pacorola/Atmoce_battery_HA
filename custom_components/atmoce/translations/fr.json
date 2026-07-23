@@ -1,0 +1,80 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Passerelle Atmoce - Connexion",
+        "description": "Entrez l'IP locale de votre passerelle Atmoce (MC100 / MG100).",
+        "data": {
+          "host": "Hôte",
+          "port": "Port",
+          "slave": "ID esclave Modbus (1-247)"
+        },
+        "data_description": {
+          "slave": "Ne le modifiez que si votre passerelle a été configurée avec un ID esclave différent de la valeur par défaut. Laissez 1 si vous n'êtes pas sûr."
+        }
+      },
+      "battery": {
+        "title": "Modèle de batterie",
+        "description": "Sélectionnez votre modèle de batterie. Cela configure les limites de puissance appropriées.",
+        "data": {
+          "battery_model": "Modèle"
+        }
+      },
+      "manual_battery": {
+        "title": "Spécifications manuelles de la batterie",
+        "description": "Saisissez manuellement les spécifications de votre batterie.",
+        "data": {
+          "capacity_kwh": "Capacité utile (kWh)",
+          "charge_kw": "Puissance maximale de charge continue (kW)",
+          "discharge_kw": "Puissance maximale de décharge continue (kW)"
+        }
+      },
+      "cloud": {
+        "title": "Atmoce Cloud (optionnel)",
+        "description": "Deux fonctionnalités optionnelles et indépendantes. Le fallback de supervision (app_key/app_secret) nécessite des clés Open API partenaire Atmoce. Les limites de batterie (charge/décharge/réserve de sécurité) nécessitent uniquement votre connexion habituelle à atmocecloud.com (email + mot de passe).",
+        "data": {
+          "cloud_enabled": "Activer le fallback de supervision Cloud",
+          "cloud_app_key": "API app_key (Open API, optionnel)",
+          "cloud_app_secret": "API app_secret (Open API, optionnel)",
+          "cloud_web_email": "Email atmocecloud.com (pour les limites de batterie)",
+          "cloud_web_password": "Mot de passe atmocecloud.com",
+          "modbus_retry_count": "Échecs Modbus avant bascule vers Cloud"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Réauthentification - IP de la passerelle modifiée",
+        "data": {
+          "host": "Hôte",
+          "port": "Port"
+        }
+      }
+
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter à la passerelle Atmoce. Vérifiez l'adresse IP et que Modbus TCP est activé.",
+      "cloud_credentials_required": "app_key et app_secret sont obligatoires lorsque le fallback Cloud est activé."
+    },
+    "abort": {
+      "already_configured": "Cette passerelle est déjà configurée.",
+      "reauth_successful": "Réauthentification réussie."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Atmoce",
+        "data": {
+          "modbus_retry_count": "Échecs Modbus avant bascule vers Cloud",
+          "cloud_enabled": "Activer le fallback de supervision Cloud",
+          "cloud_app_key": "API app_key (Open API, optionnel)",
+          "cloud_app_secret": "API app_secret (Open API, optionnel)",
+          "cloud_web_email": "Email atmocecloud.com (pour les limites de batterie)",
+          "cloud_web_password": "Mot de passe atmocecloud.com"
+        }
+      }
+    },
+    "error": {
+      "cloud_credentials_required": "app_key et app_secret sont obligatoires lorsque le fallback Cloud est activé."
+    }
+  }
+}
