@@ -15,6 +15,7 @@ from pymodbus.exceptions import ModbusException
 
 from .cloud_client import AtmoceCloudClient, AtmoceCloudError
 from .const import (
+    CLOUD_FETCH_INTERVAL,
     CONF_BATTERY_COUNT,
     CONF_BATTERY_MODEL,
     CONF_CAPACITY_KWH,
@@ -167,6 +168,10 @@ class AtmoceCoordinator(DataUpdateCoordinator):
         self._modbus_failures: int = 0
         self._active_source: str = SOURCE_MODBUS
         self._connection_errors: int = 0
+        # Last Open API answer and when it was asked for, so the fallback can
+        # be served from cache between CLOUD_FETCH_INTERVAL calls.
+        self._cloud_data: dict[str, Any] | None = None
+        self._cloud_last_fetch: float | None = None
 
         # Device info (populated on first successful poll)
         self.serial_number: str = cfg.get("serial_number", "unknown")
@@ -216,12 +221,7 @@ class AtmoceCoordinator(DataUpdateCoordinator):
 
         # Fallback to Cloud after N consecutive Modbus failures
         if raw is None and self._cloud_enabled and self._modbus_failures >= self._retry_count:
-            try:
-                raw = await self._fetch_cloud()
-                self._active_source = SOURCE_CLOUD
-                _LOGGER.info("Using Cloud API as data source (Modbus unavailable)")
-            except CLOUD_FETCH_ERRORS as exc:
-                _LOGGER.error("Cloud fallback also failed: %s", exc)
+            raw = await self._fetch_cloud_throttled()
 
         if raw is None:
             raise UpdateFailed("Both Modbus and Cloud data sources unavailable")
@@ -299,6 +299,40 @@ class AtmoceCoordinator(DataUpdateCoordinator):
     async def _fetch_cloud(self) -> dict[str, Any]:
         """Fetch data from Atmoce Cloud API (read-only monitoring fallback)."""
         return await self._get_cloud_client().async_fetch_site_data(self.serial_number)
+
+    async def _fetch_cloud_throttled(self) -> dict[str, Any] | None:
+        """Return Cloud data, asking the Open API at most once per interval.
+
+        The gateway being down does not make the Open API any fresher: it
+        serves data with a quarter of an hour of latency, so polling it every
+        DEFAULT_SCAN_INTERVAL seconds would hammer someone else's service for
+        the same numbers. Between calls the last answer is replayed, and a
+        failed call is not retried until the interval is up either.
+        """
+        now = self.hass.loop.time()
+        if (
+            self._cloud_last_fetch is not None
+            and now - self._cloud_last_fetch < CLOUD_FETCH_INTERVAL
+        ):
+            if self._cloud_data is None:
+                return None  # the last call failed; do not ask again yet
+            self._active_source = SOURCE_CLOUD
+            return dict(self._cloud_data)
+
+        # Stamped before the call, not after, so a failing API is retried on
+        # the same slow cadence rather than on every poll.
+        self._cloud_last_fetch = now
+        try:
+            data = await self._fetch_cloud()
+        except CLOUD_FETCH_ERRORS as exc:
+            self._cloud_data = None
+            _LOGGER.error("Cloud fallback also failed: %s", exc)
+            return None
+
+        self._cloud_data = data
+        self._active_source = SOURCE_CLOUD
+        _LOGGER.info("Using Cloud API as data source (Modbus unavailable)")
+        return dict(data)
 
     # ── Computed / derived sensors ────────────────────────────────────────────
     def _compute_derived(self, data: dict[str, Any]) -> dict[str, Any]:

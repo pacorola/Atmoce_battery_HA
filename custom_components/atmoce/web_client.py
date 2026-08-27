@@ -18,6 +18,7 @@ from typing import Any
 import aiohttp
 
 from .const import CLOUD_WEB_BASE_URL
+from .redact import redact_model
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,7 +73,9 @@ class AtmoceWebClient:
             )
         self._token = token
         self._prefix = data.get("prefix") or "Bearer "
-        _LOGGER.debug("Atmoce web login OK for %s", self._email)
+        # No email here: debug logs get attached to public issues too, and the
+        # portal login is the same credential diagnostics redacts.
+        _LOGGER.debug("Atmoce web login OK")
 
     async def _async_post(self, url: str, body: dict[str, Any]) -> dict[str, Any]:
         """POST with the session token, re-logging in once on a 401."""
@@ -112,7 +115,7 @@ class AtmoceWebClient:
     async def async_read_model(self, station_id: int) -> dict[str, Any]:
         """Read the current storageModel for a station."""
         payload = await self._async_post(_SELECT_MODEL_URL, {"stationId": station_id})
-        _LOGGER.debug("selectModel response: %s", payload)
+        _LOGGER.debug("selectModel response: %s", redact_model(payload))
         if not payload.get("success"):
             raise ValueError(f"selectModel failed: {payload.get('msg')}")
         return payload.get("data") or {}
@@ -130,6 +133,10 @@ class AtmoceWebClient:
         body.update(updates)
 
         payload = await self._async_post(_CHANGE_MODEL_URL, body)
-        _LOGGER.debug("changeModel %s response: %s", updates, payload)
+        _LOGGER.debug(
+            "changeModel %s response: %s",
+            redact_model(updates),
+            redact_model(payload),
+        )
         if not payload.get("success"):
             raise ValueError(f"changeModel failed: {payload.get('msg')}")

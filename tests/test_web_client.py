@@ -189,3 +189,63 @@ class TestReadModel:
         with patch("aiohttp.ClientSession", return_value=_session([resp])):
             model = await client.async_read_model(16078)
         assert model["storageChargeCutoffSoc"] == 90
+
+
+class TestDebugLogsAreRedacted:
+    """Debug logs get attached to public issues just like diagnostics do."""
+
+    @pytest.mark.asyncio
+    async def test_login_does_not_log_the_email(self, caplog):
+        client = AtmoceWebClient("me@example.com", "secret12")
+        login = _resp({"data": {"token": "TOKEN123", "prefix": "Bearer "}})
+
+        with caplog.at_level("DEBUG", logger="custom_components.atmoce.web_client"):
+            with patch("aiohttp.ClientSession", return_value=_session([login])):
+                await client._async_login()
+
+        assert "me@example.com" not in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_read_model_redacts_the_payload(self, caplog):
+        client = AtmoceWebClient("e", "p")
+        client._token = "T"
+        resp = _resp(
+            {
+                "success": True,
+                "data": {
+                    "storageChargeCutoffSoc": 90,
+                    "stationName": "Casa de Pablo",
+                    "ownerMail": "me@example.com",
+                    "latitude": 40.41,
+                },
+            }
+        )
+
+        with caplog.at_level("DEBUG", logger="custom_components.atmoce.web_client"):
+            with patch("aiohttp.ClientSession", return_value=_session([resp])):
+                model = await client.async_read_model(16078)
+
+        assert "Casa de Pablo" not in caplog.text
+        assert "me@example.com" not in caplog.text
+        assert "40.41" not in caplog.text
+        # The settings themselves still make it to the log, and to the caller.
+        assert "storageChargeCutoffSoc" in caplog.text
+        assert model["stationName"] == "Casa de Pablo"
+
+    @pytest.mark.asyncio
+    async def test_change_model_redacts_both_payloads(self, caplog):
+        client = AtmoceWebClient("e", "p")
+        client._token = "T"
+        model = {"workModel": 1, "ownerMail": "me@example.com"}
+        session = _session([
+            _resp({"success": True, "data": model}),
+            _resp({"success": True, "data": 16078, "userAccount": "pablo"}),
+        ])
+
+        with caplog.at_level("DEBUG", logger="custom_components.atmoce.web_client"):
+            with patch("aiohttp.ClientSession", return_value=session):
+                await client.async_change_model(16078, {"backupSoc": 20})
+
+        assert "me@example.com" not in caplog.text
+        assert "pablo" not in caplog.text
+        assert "backupSoc" in caplog.text

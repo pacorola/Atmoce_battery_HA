@@ -6,6 +6,11 @@ DEFAULT_SLAVE = 1
 DEFAULT_SCAN_INTERVAL = 10  # seconds
 MODBUS_TIMEOUT = 10
 MODBUS_RETRY_COUNT = 3       # consecutive failures before Cloud fallback
+# The Open API serves data that is already up to 15 minutes old, so asking it
+# again on the Modbus cadence would only add load to someone else's service.
+# Modbus keeps being retried every DEFAULT_SCAN_INTERVAL regardless, so the
+# gateway coming back is still noticed within seconds.
+CLOUD_FETCH_INTERVAL = 15 * 60  # seconds
 CLOUD_BASE_URL = "https://www.atmocecloud.com/openapi/v1"
 
 # ── Battery model catalogue ──────────────────────────────────────────────────

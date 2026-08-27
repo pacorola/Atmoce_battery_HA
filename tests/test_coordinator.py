@@ -10,9 +10,12 @@ from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from custom_components.atmoce.cloud_client import AtmoceCloudAuthError, AtmoceCloudError
 from custom_components.atmoce.const import (
+    CLOUD_FETCH_INTERVAL,
     KEY_BATTERY_RESERVED_SOC,
     KEY_END_OF_CHARGE_SOC,
     KEY_END_OF_DISCHARGE_SOC,
+    SOURCE_CLOUD,
+    SOURCE_MODBUS,
 )
 from custom_components.atmoce.coordinator import AtmoceCoordinator
 
@@ -386,3 +389,63 @@ class TestWebSOCLimits:
         # Must not raise — best-effort load.
         await coordinator.async_load_web_settings()
         assert coordinator._web_params == {}
+
+
+class TestCloudFallbackThrottle:
+    """The Open API is a third party's service, and its data is 15 min old."""
+
+    @staticmethod
+    def _prepare(coordinator, clock):
+        coordinator._cloud_enabled = True
+        coordinator._retry_count = 1
+        coordinator._modbus.async_fetch_all = AsyncMock(
+            side_effect=ConnectionError("modbus down")
+        )
+        coordinator._fetch_cloud = AsyncMock(return_value={"battery_soc": 55})
+        coordinator.hass.loop.time = MagicMock(side_effect=clock)
+
+    @pytest.mark.asyncio
+    async def test_repeated_polls_ask_the_api_once(self, coordinator):
+        # Three polls ten seconds apart, well inside the fetch interval.
+        self._prepare(coordinator, [0.0, 10.0, 20.0])
+
+        for _ in range(3):
+            data = await coordinator._async_update_data()
+            assert data["battery_soc"] == 55
+            assert data["active_source"] == SOURCE_CLOUD
+
+        coordinator._fetch_cloud.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_api_is_asked_again_after_the_interval(self, coordinator):
+        self._prepare(coordinator, [0.0, float(CLOUD_FETCH_INTERVAL) + 1.0])
+
+        await coordinator._async_update_data()
+        await coordinator._async_update_data()
+
+        assert coordinator._fetch_cloud.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_a_failed_call_is_not_retried_inside_the_interval(self, coordinator):
+        self._prepare(coordinator, [0.0, 10.0])
+        coordinator._fetch_cloud = AsyncMock(side_effect=AtmoceCloudError("boom"))
+
+        for _ in range(2):
+            with pytest.raises(UpdateFailed):
+                await coordinator._async_update_data()
+
+        coordinator._fetch_cloud.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_modbus_recovers_without_waiting_for_the_interval(self, coordinator):
+        """Modbus is still tried on every poll while the cloud is throttled."""
+        self._prepare(coordinator, [0.0, 10.0])
+
+        await coordinator._async_update_data()
+
+        coordinator._modbus.async_fetch_all = AsyncMock(return_value={"battery_soc": 61})
+        data = await coordinator._async_update_data()
+
+        assert data["battery_soc"] == 61
+        assert data["active_source"] == SOURCE_MODBUS
+        coordinator._fetch_cloud.assert_awaited_once()

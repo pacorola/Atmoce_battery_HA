@@ -15,6 +15,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import AtmoceCoordinator
+from .redact import redact_model
 
 # Credentials that must never appear in a diagnostics download — these files are
 # routinely attached to public GitHub issues.
@@ -25,41 +26,8 @@ TO_REDACT = {
     CONF_CLOUD_WEB_PASSWORD,
 }
 
-# The storage model comes from an undocumented endpoint, so its fields are not
-# a known list to check against. Redact by shape instead: anything whose name
-# suggests it identifies the owner or locates the site. A settings field slipping
-# through is a nuisance; an address reaching a public issue is not.
-_MODEL_REDACT_HINTS = (
-    "mail",
-    "phone",
-    "mobile",
-    "address",
-    "owner",
-    "name",
-    "latitude",
-    "longitude",
-    "lat",
-    "lng",
-    "token",
-    "user",
-    "account",
-)
-
-
-def _redact_model(value: Any) -> Any:
-    """Recursively blank out owner- or site-identifying fields."""
-    if isinstance(value, dict):
-        return {
-            k: (
-                "**REDACTED**"
-                if any(hint in str(k).lower() for hint in _MODEL_REDACT_HINTS)
-                else _redact_model(v)
-            )
-            for k, v in value.items()
-        }
-    if isinstance(value, list):
-        return [_redact_model(v) for v in value]
-    return value
+# The storage model is redacted by shape in redact.py, so the same rule can be
+# applied to the debug logs in web_client.py.
 
 
 async def async_get_config_entry_diagnostics(
@@ -87,6 +55,6 @@ async def async_get_config_entry_diagnostics(
         # The whole storageModel as the portal returned it. Only three of its
         # fields are exposed as entities so far; the rest is what tells us which
         # settings exist and which ones a write must not drop.
-        "storage_model": _redact_model(coordinator.web_model),
+        "storage_model": redact_model(coordinator.web_model),
         "last_data": coordinator.data,
     }
