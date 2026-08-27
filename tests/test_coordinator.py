@@ -402,6 +402,8 @@ class TestCloudFallbackThrottle:
             side_effect=ConnectionError("modbus down")
         )
         coordinator._fetch_cloud = AsyncMock(return_value={"battery_soc": 55})
+        # Already known, so a recovering Modbus poll does not read it again.
+        coordinator.firmware_version = "1.2.3"
         coordinator.hass.loop.time = MagicMock(side_effect=clock)
 
     @pytest.mark.asyncio
