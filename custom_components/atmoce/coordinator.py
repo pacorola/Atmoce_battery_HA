@@ -116,10 +116,10 @@ class AtmoceCoordinator(DataUpdateCoordinator):
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
-        self.config_entry = config_entry
         # Options (set via the "Configure" dialog) override the initial setup data,
         # so Cloud credentials/toggles edited after setup take effect.
         cfg = {**config_entry.data, **(config_entry.options or {})}
