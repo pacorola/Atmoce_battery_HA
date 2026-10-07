@@ -9,6 +9,7 @@ from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ModbusException
 
 from .const import (
+    GRID_STATUS_MIN_PROTOCOL,
     MODBUS_TIMEOUT,
     REG_ACTIVE_POWER_PCT,
     REG_BATTERY_CHARGED_DAILY,
@@ -36,8 +37,10 @@ from .const import (
     REG_GRID_ENERGY_DAILY,
     REG_GRID_ENERGY_TOTAL,
     REG_GRID_POWER,
+    REG_GRID_STATUS,
     REG_GRID_VOLTAGE,
     REG_HW_VERSION,
+    REG_PROTOCOL_VERSION,
     REG_PV_ENERGY_DAILY,
     REG_PV_ENERGY_TOTAL,
     REG_PV_POWER,
@@ -222,7 +225,15 @@ class AtmoceModbusClient:
         await safe("forced_power",       self._read_uint32(REG_FORCED_POWER[0]))
 
         # System
-        await safe("station_status", self._read_uint16(REG_STATION_STATUS[0]))
+        await safe("station_status",    self._read_uint16(REG_STATION_STATUS[0]))
+        await safe("protocol_version",  self._read_uint16(REG_PROTOCOL_VERSION[0]))
+
+        # Older firmware lets an unknown address time out, and the timeout is as long
+        # as the poll interval, so grid status is only read where the protocol has it.
+        if (data["protocol_version"] or 0) >= GRID_STATUS_MIN_PROTOCOL:
+            await safe("grid_status", self._read_uint16(REG_GRID_STATUS[0]))
+        else:
+            data["grid_status"] = None
 
         # Apply scales
         def scale(key: str, factor: float) -> None:
