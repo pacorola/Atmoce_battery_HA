@@ -21,7 +21,7 @@
           "manual_specs": "Introducir las especificaciones a mano"
         },
         "data_description": {
-          "battery_count": "Cada unidad suma 7 kWh, 3,75 kW de carga y 4,5 kW de descarga.",
+          "battery_count": "Cada unidad suma 7 kWh, 3,75 kW de carga y 4,5 kW de descarga. Pon 0 si la pasarela solo tiene microinversores, sin batería Atmoce.",
           "manual_specs": "Márcalo si tienes otro equipo, o si tu inversor limita la potencia total por debajo de la suma de las unidades."
         }
       },
@@ -76,7 +76,7 @@
           "battery_count": "Número de baterías"
         },
         "data_description": {
-          "battery_count": "Cada unidad MS-7K-U suma 7 kWh, 3,75 kW de carga y 4,5 kW de descarga. Una MS-14K-U cuenta como dos unidades."
+          "battery_count": "Cada unidad MS-7K-U suma 7 kWh, 3,75 kW de carga y 4,5 kW de descarga. Una MS-14K-U cuenta como dos unidades. Pon 0 si la pasarela solo tiene microinversores, sin batería Atmoce."
         }
       }
     },

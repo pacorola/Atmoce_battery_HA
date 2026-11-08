@@ -182,6 +182,11 @@ CONF_RETRY_COUNT      = "modbus_retry_count"
 DEFAULT_BATTERY_COUNT = 1
 MAX_BATTERY_COUNT     = 16
 
+# A count of zero is a gateway with no Atmoce battery behind it (MC100 with only
+# microinverters). The device is then named after the gateway, and only the
+# grid, solar and system entities are created.
+NO_BATTERY_MODEL      = "MC100"
+
 # The only battery Atmoce actually ships as a unit. MS-14K-U is two of these in
 # one box, so setup asks for a count instead of a model. The catalogue keeps
 # both: entries created before the count existed still carry "MS-14K-U", and

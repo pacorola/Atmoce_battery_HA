@@ -34,6 +34,7 @@ from .const import (
     DOMAIN,
     MAX_BATTERY_COUNT,
     MODBUS_RETRY_COUNT,
+    NO_BATTERY_MODEL,
     UNIT_BATTERY_MODEL,
 )
 from .modbus_client import AtmoceModbusClient
@@ -72,7 +73,7 @@ def _gateway_schema(
 _COUNT_SELECTOR = vol.All(
     selector.NumberSelector(
         selector.NumberSelectorConfig(
-            min=1,
+            min=0,
             max=MAX_BATTERY_COUNT,
             step=1,
             mode=selector.NumberSelectorMode.BOX,
@@ -144,6 +145,15 @@ def _specs_for(count: int, stored_model: str | None = None) -> dict[str, Any]:
     is not renamed in Home Assistant behind the owner's back. Once the numbers
     no longer match the label, the stack is expressed in units instead.
     """
+    if count == 0:
+        return {
+            CONF_BATTERY_MODEL: NO_BATTERY_MODEL,
+            CONF_BATTERY_COUNT: 0,
+            CONF_CAPACITY_KWH: 0.0,
+            CONF_CHARGE_KW: 0.0,
+            CONF_DISCHARGE_KW: 0.0,
+        }
+
     unit = BATTERY_MODELS[UNIT_BATTERY_MODEL]
     capacity = round(unit["capacity_kwh"] * count, 2)
 
@@ -166,7 +176,7 @@ def _stored_count(entry_data: dict[str, Any]) -> int:
     from the stored capacity: an MS-14K-U comes out as the two units it is.
     """
     if (count := entry_data.get(CONF_BATTERY_COUNT)) is not None:
-        return max(1, min(MAX_BATTERY_COUNT, int(count)))
+        return max(0, min(MAX_BATTERY_COUNT, int(count)))
 
     capacity = entry_data.get(CONF_CAPACITY_KWH)
     unit_capacity = BATTERY_MODELS[UNIT_BATTERY_MODEL]["capacity_kwh"]
@@ -224,12 +234,11 @@ class AtmoceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
-            if user_input.get(CONF_MANUAL_SPECS):
+            count = user_input.get(CONF_BATTERY_COUNT, DEFAULT_BATTERY_COUNT)
+            if count and user_input.get(CONF_MANUAL_SPECS):
                 self._data[CONF_BATTERY_MODEL] = "manual"
                 return await self.async_step_manual_battery()
-            self._data.update(
-                _specs_for(user_input.get(CONF_BATTERY_COUNT, DEFAULT_BATTERY_COUNT))
-            )
+            self._data.update(_specs_for(count))
             return await self.async_step_cloud()
 
         return self.async_show_form(

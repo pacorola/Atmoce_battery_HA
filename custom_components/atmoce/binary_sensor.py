@@ -74,6 +74,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator: AtmoceCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        [AtmoceBatteryProblem(coordinator), AtmoceGridOutage(coordinator)]
-    )
+    entities: list[BinarySensorEntity] = [AtmoceGridOutage(coordinator)]
+    if coordinator.has_battery:
+        entities.insert(0, AtmoceBatteryProblem(coordinator))
+    async_add_entities(entities)

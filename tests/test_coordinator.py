@@ -451,3 +451,33 @@ class TestCloudFallbackThrottle:
         assert data["battery_soc"] == 61
         assert data["active_source"] == SOURCE_MODBUS
         coordinator._fetch_cloud.assert_awaited_once()
+
+
+class TestGatewayWithoutBattery:
+    @pytest.fixture
+    def no_battery(self, mock_hass, mock_config_entry):
+        from custom_components.atmoce.coordinator import AtmoceCoordinator
+
+        mock_config_entry.data = {
+            **mock_config_entry.data,
+            "battery_model": "MC100",
+            "battery_count": 0,
+            "capacity_kwh": 0.0,
+            "cloud_web_email": "me@example.com",
+            "cloud_web_password": "pw",
+        }
+        return AtmoceCoordinator(mock_hass, mock_config_entry)
+
+    def test_has_no_battery(self, no_battery):
+        assert no_battery.has_battery is False
+
+    def test_battery_limits_are_not_offered(self, no_battery):
+        """The portal login drives battery limits only; nothing to load."""
+        assert no_battery.soc_control_available is False
+
+    def test_no_autonomy_estimate(self, no_battery):
+        data = no_battery._compute_derived(
+            {"grid_power": 500, "pv_power": 1000, "battery_power": 0, "battery_soc": 0}
+        )
+        assert data["autonomy_hours"] is None
+        assert data["pv_self_consumption_rate"] is not None

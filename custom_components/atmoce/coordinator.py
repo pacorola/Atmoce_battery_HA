@@ -196,9 +196,14 @@ class AtmoceCoordinator(DataUpdateCoordinator):
         return self._cloud_enabled
 
     @property
+    def has_battery(self) -> bool:
+        """False for a gateway set up with zero batteries (solar only)."""
+        return self.battery_count > 0
+
+    @property
     def soc_control_available(self) -> bool:
         """Whether the battery SOC limits can be read/written (web login set)."""
-        return bool(self._web_email and self._web_password)
+        return self.has_battery and bool(self._web_email and self._web_password)
 
     # ── Main update loop ──────────────────────────────────────────────────────
     async def _async_update_data(self) -> dict[str, Any]:
@@ -209,7 +214,7 @@ class AtmoceCoordinator(DataUpdateCoordinator):
             raw = await self._fetch_modbus()
             self._modbus_failures = 0
             self._active_source = SOURCE_MODBUS
-        except (ConnectionError, ModbusException, OSError, asyncio.TimeoutError) as exc:
+        except (TimeoutError, ConnectionError, ModbusException, OSError) as exc:
             self._modbus_failures += 1
             self._connection_errors += 1
             _LOGGER.warning(
@@ -352,7 +357,7 @@ class AtmoceCoordinator(DataUpdateCoordinator):
             else 0.0
         )
         soc = data.get("battery_soc") or 0
-        if avg_consumption_w > 10:
+        if self.has_battery and avg_consumption_w > 10:
             available_kwh = (soc / 100.0) * self.capacity_kwh
             data["autonomy_hours"] = round(available_kwh / (avg_consumption_w / 1000.0), 1)
         else:

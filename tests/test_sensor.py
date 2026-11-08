@@ -107,3 +107,33 @@ class TestDeviceInfo:
         assert info["manufacturer"] == "Atmoce"
         assert info["model"] == "MS-7K-U"
         assert "192.168.1.100" in info["configuration_url"]
+
+
+class TestGatewayWithoutBattery:
+    """A gateway set up with zero batteries gets no battery entities."""
+
+    @staticmethod
+    async def _setup(has_battery: bool) -> list:
+        from custom_components.atmoce.sensor import async_setup_entry
+
+        coord = _make_coordinator({})
+        coord.has_battery = has_battery
+        hass = MagicMock()
+        hass.data = {DOMAIN: {"entry": coord}}
+        entry = MagicMock()
+        entry.entry_id = "entry"
+        added: list = []
+        await async_setup_entry(hass, entry, lambda ents: added.extend(ents))
+        return [e.entity_description.key for e in added]
+
+    @pytest.mark.asyncio
+    async def test_battery_sensors_are_left_out(self):
+        keys = await self._setup(has_battery=False)
+        assert not any(k.startswith("battery_") for k in keys)
+        assert "autonomy_hours" not in keys
+        assert {"grid_power", "pv_power", "station_status"} <= set(keys)
+
+    @pytest.mark.asyncio
+    async def test_with_a_battery_everything_is_there(self):
+        keys = await self._setup(has_battery=True)
+        assert len(keys) == len(SENSOR_DESCRIPTIONS)

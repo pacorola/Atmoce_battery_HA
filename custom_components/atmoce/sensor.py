@@ -251,6 +251,12 @@ SENSOR_DESCRIPTIONS: tuple[AtmoceeSensorDescription, ...] = (
 )
 
 
+# Left out on a gateway set up with zero batteries.
+BATTERY_SENSOR_KEYS = frozenset(
+    d.key for d in SENSOR_DESCRIPTIONS if d.key.startswith("battery_")
+) | {"autonomy_hours"}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -258,7 +264,9 @@ async def async_setup_entry(
 ) -> None:
     coordinator: AtmoceCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
-        AtmoceSensor(coordinator, description) for description in SENSOR_DESCRIPTIONS
+        AtmoceSensor(coordinator, description)
+        for description in SENSOR_DESCRIPTIONS
+        if coordinator.has_battery or description.key not in BATTERY_SENSOR_KEYS
     )
 
 

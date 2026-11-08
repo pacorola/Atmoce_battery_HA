@@ -249,6 +249,33 @@ class TestBatteryCount:
         assert specs[CONF_CHARGE_KW] == 11.25
         assert specs[CONF_CAPACITY_KWH] == 21.0
 
+    @pytest.mark.asyncio
+    async def test_zero_batteries_is_a_gateway_without_storage(self):
+        """MC100 with only microinverters: no capacity, named after the gateway."""
+        flow = self._make_flow()
+        await flow.async_step_battery({CONF_BATTERY_COUNT: 0})
+
+        assert flow._data[CONF_BATTERY_COUNT] == 0
+        assert flow._data[CONF_CAPACITY_KWH] == 0.0
+        assert flow._data[CONF_CHARGE_KW] == 0.0
+        assert flow._data[CONF_BATTERY_MODEL] == "MC100"
+        flow.async_step_cloud.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_zero_batteries_ignores_the_manual_checkbox(self):
+        flow = self._make_flow()
+        flow.async_step_manual_battery = AsyncMock(return_value={"type": "form"})
+
+        await flow.async_step_battery({CONF_BATTERY_COUNT: 0, "manual_specs": True})
+
+        flow.async_step_manual_battery.assert_not_awaited()
+        assert flow._data[CONF_BATTERY_COUNT] == 0
+
+    def test_count_accepts_zero(self):
+        from custom_components.atmoce.config_flow import STEP_BATTERY_SCHEMA
+
+        assert STEP_BATTERY_SCHEMA({CONF_BATTERY_COUNT: 0.0})[CONF_BATTERY_COUNT] == 0
+
 
 class TestReconfigure:
     """Adding a battery must not require deleting the integration."""
@@ -409,3 +436,17 @@ class TestGatewayStepConnectivity:
         flow = self._make_flow()
         result = await flow.async_step_user(None)
         flow.async_show_form.assert_called_once()
+
+
+class TestReconfigureToAndFromZero:
+    def test_stored_zero_is_kept(self):
+        from custom_components.atmoce.config_flow import _stored_count
+
+        assert _stored_count({CONF_BATTERY_COUNT: 0}) == 0
+
+    def test_adding_a_battery_to_a_gateway_names_it_after_the_unit(self):
+        from custom_components.atmoce.config_flow import _specs_for
+
+        specs = _specs_for(1, stored_model="MC100")
+        assert specs[CONF_BATTERY_MODEL] == "MS-7K-U"
+        assert specs[CONF_CAPACITY_KWH] == 7.0

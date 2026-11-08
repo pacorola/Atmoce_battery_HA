@@ -16,6 +16,9 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator: AtmoceCoordinator = hass.data[DOMAIN][entry.entry_id]
+    # Every control here drives the battery; a gateway without one gets none.
+    if not coordinator.has_battery:
+        return
     async_add_entities([
         AtmoceForcedCommandSelect(coordinator),
         AtmoceForcedModeSelect(coordinator),

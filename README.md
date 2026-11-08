@@ -54,7 +54,7 @@ Download the [latest release](https://github.com/pacorola/Atmoce_battery_HA/rele
 
 1. Go to **Settings → Devices & Services → Add Integration** and search for **Atmoce Battery**.
 2. **Gateway** — the local IP of your MC100 / MG100. Connectivity is verified before continuing.
-3. **Batteries** — how many MS-7K-U units are installed. Capacity and power limits follow from that; tick **Enter specifications manually** for different hardware.
+3. **Batteries** — how many MS-7K-U units are installed. Capacity and power limits follow from that; tick **Enter specifications manually** for different hardware. Enter **0** for a gateway with only microinverters: the device is then called *Atmoce MC100* and only the grid, solar and system entities are created.
 4. **atmocecloud.com account** (optional) — your ordinary portal login, the same one as the ATMOZEN app. Needed for the battery limits and the standing policy. Everything else works without it.
 5. **Cloud monitoring fallback** (optional, advanced) — almost nobody needs this; submit it untouched. See the FAQ on `app_key`.
 

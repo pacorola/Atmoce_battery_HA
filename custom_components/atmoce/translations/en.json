@@ -21,7 +21,7 @@
           "manual_specs": "Enter specifications manually instead"
         },
         "data_description": {
-          "battery_count": "Each unit adds 7 kWh, 3.75 kW of charge power and 4.5 kW of discharge power.",
+          "battery_count": "Each unit adds 7 kWh, 3.75 kW of charge power and 4.5 kW of discharge power. Enter 0 for a gateway with only microinverters and no Atmoce battery.",
           "manual_specs": "Tick this for different hardware, or if your inverter caps the total power below the sum of the units."
         }
       },
@@ -76,7 +76,7 @@
           "battery_count": "Number of batteries"
         },
         "data_description": {
-          "battery_count": "Each MS-7K-U unit adds 7 kWh, 3.75 kW of charge power and 4.5 kW of discharge power. An MS-14K-U counts as two units."
+          "battery_count": "Each MS-7K-U unit adds 7 kWh, 3.75 kW of charge power and 4.5 kW of discharge power. An MS-14K-U counts as two units. Enter 0 for a gateway with only microinverters and no Atmoce battery."
         }
       }
     },

@@ -21,7 +21,7 @@
           "manual_specs": "Saisir les spécifications manuellement"
         },
         "data_description": {
-          "battery_count": "Chaque unité ajoute 7 kWh, 3,75 kW de charge et 4,5 kW de décharge.",
+          "battery_count": "Chaque unité ajoute 7 kWh, 3,75 kW de charge et 4,5 kW de décharge. Indiquez 0 pour une passerelle avec uniquement des micro-onduleurs, sans batterie Atmoce.",
           "manual_specs": "Cochez cette case pour un autre matériel, ou si votre onduleur plafonne la puissance totale en dessous de la somme des unités."
         }
       },
@@ -76,7 +76,7 @@
           "battery_count": "Nombre de batteries"
         },
         "data_description": {
-          "battery_count": "Chaque unité MS-7K-U ajoute 7 kWh, 3,75 kW de charge et 4,5 kW de décharge. Une MS-14K-U compte pour deux unités."
+          "battery_count": "Chaque unité MS-7K-U ajoute 7 kWh, 3,75 kW de charge et 4,5 kW de décharge. Une MS-14K-U compte pour deux unités. Indiquez 0 pour une passerelle avec uniquement des micro-onduleurs, sans batterie Atmoce."
         }
       }
     },
