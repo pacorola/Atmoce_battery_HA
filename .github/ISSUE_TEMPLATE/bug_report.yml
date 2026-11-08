@@ -1,0 +1,55 @@
+name: Bug report
+description: Something is wrong or missing with the integration
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The details below save a round of questions.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: gateway
+    attributes:
+      label: Gateway model
+      options:
+        - MC100
+        - MC100L
+        - MC100-T
+        - MG100
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: batteries
+    attributes:
+      label: Batteries
+      description: How many Atmoce batteries, and which model. Write 0 if none.
+      placeholder: 1 × MS-7K-U
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Gateway firmware
+      description: Shown on the device page in Home Assistant, or in the ATMOZEN app.
+      placeholder: 01.01.00.29
+  - type: input
+    id: versions
+    attributes:
+      label: Integration and Home Assistant versions
+      placeholder: Atmoce 1.5.6, Home Assistant 2026.11.0
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics and logs
+      description: |
+        Device page → ⋮ → Download diagnostics, and attach the file (credentials are removed from it).
+        Logs help too: Settings → System → Logs, filtered on `atmoce`.

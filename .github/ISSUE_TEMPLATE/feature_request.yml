@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest something the integration should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like
+      description: What you want to see or control from Home Assistant, and why.
+    validations:
+      required: true
+  - type: dropdown
+    id: gateway
+    attributes:
+      label: Gateway model
+      options:
+        - MC100
+        - MC100L
+        - MC100-T
+        - MG100
+        - Other / not sure
+  - type: input
+    id: batteries
+    attributes:
+      label: Batteries
+      description: How many Atmoce batteries, and which model. Write 0 if none.
