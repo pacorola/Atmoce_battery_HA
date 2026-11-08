@@ -157,3 +157,24 @@ class TestGridStatusGating:
         assert data["protocol_version"] is None
         assert data["grid_status"] is None
         assert 60096 not in fake.reads
+
+
+class TestProtocolVersionCache:
+    @pytest.mark.asyncio
+    async def test_read_once_per_connection(self):
+        client, fake = _client({**_BASE, 60026: 0x0106, 60096: 0})
+        await client.async_fetch_all()
+        data = await client.async_fetch_all()
+        assert fake.reads.count(60026) == 1
+        assert data["protocol_version"] == 0x0106
+        assert data["grid_status"] == 0
+
+    @pytest.mark.asyncio
+    async def test_failed_read_is_retried_next_poll(self):
+        client, fake = _client(_BASE)
+        await client.async_fetch_all()
+        fake.regs[60026] = 0x0105
+        fake.regs[60096] = 1
+        data = await client.async_fetch_all()
+        assert fake.reads.count(60026) == 2
+        assert data["grid_status"] == 1

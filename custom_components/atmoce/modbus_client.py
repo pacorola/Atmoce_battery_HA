@@ -83,9 +83,13 @@ class AtmoceModbusClient:
         self._port = int(port)
         self._slave = int(slave)
         self._client: AsyncModbusTcpClient | None = None
+        # Protocol version, read once per connection: it only changes with a
+        # firmware update, and that reboots the gateway and forces a reconnect.
+        self._protocol_version: int | None = None
 
     # ── Connection ────────────────────────────────────────────────────────────
     async def async_connect(self) -> None:
+        self._protocol_version = None
         self._client = AsyncModbusTcpClient(
             self._host,
             port=self._port,
@@ -226,7 +230,11 @@ class AtmoceModbusClient:
 
         # System
         await safe("station_status",    self._read_uint16(REG_STATION_STATUS[0]))
-        await safe("protocol_version",  self._read_uint16(REG_PROTOCOL_VERSION[0]))
+        if self._protocol_version is None:
+            await safe("protocol_version", self._read_uint16(REG_PROTOCOL_VERSION[0]))
+            self._protocol_version = data["protocol_version"]
+        else:
+            data["protocol_version"] = self._protocol_version
 
         # Older firmware lets an unknown address time out, and the timeout is as long
         # as the poll interval, so grid status is only read where the protocol has it.
