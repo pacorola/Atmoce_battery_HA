@@ -49,6 +49,7 @@ BATTERY_MODELS: dict[str, dict] = {
 REG_SN                        = (60000, "str10", 1,      None,  "Serial number")
 REG_HW_VERSION                = (60010, "uint16", 1,     None,  "Hardware version")
 REG_FW_VERSION                = (60011, "str15", 1,      None,  "Firmware version")
+REG_PROTOCOL_VERSION          = (60026, "uint16", 1,     None,  "Protocol version 0x0105=V1.5")
 REG_PV_RATED_POWER            = (60027, "uint32", 0.001, "kW",  "Rated PV power (all MIs)")
 REG_BATTERY_RATED_POWER       = (60029, "uint32", 0.001, "kW",  "Rated battery power")
 REG_BATTERY_RATED_ENERGY      = (60031, "uint32", 0.001, "kWh", "Rated battery energy")
@@ -61,6 +62,7 @@ REG_GRID_POWER                = (60073, "int32",  1,     "W",   "Grid active pow
 REG_GRID_VOLTAGE              = (60089, "uint16", 0.1,   "V",   "Grid voltage (single-phase)")
 REG_GRID_CURRENT              = (60090, "int16",  0.01,  "A",   "Grid current (single-phase)")
 REG_BATTERY_SOC               = (60095, "uint16", 1,     "%",   "Battery SOC")
+REG_GRID_STATUS               = (60096, "uint16", 1,     None,  "Grid status 0=OnGrid 1=OffGrid (protocol V1.5+)")
 REG_PV_ENERGY_TOTAL           = (60160, "uint64", 0.01,  "kWh", "Cumulative PV generation")
 REG_PV_ENERGY_DAILY           = (60164, "uint32", 0.01,  "kWh", "Daily PV generation")
 REG_BATTERY_CHARGED_TOTAL     = (60166, "uint64", 0.01,  "kWh", "Cumulative battery charged")
@@ -73,6 +75,9 @@ REG_GRID_ENERGY_TOTAL         = (60184, "uint64", 0.01,  "kWh", "Cumulative grid
 REG_GRID_ENERGY_DAILY         = (60188, "uint32", 0.01,  "kWh", "Daily grid purchase")
 REG_BATTERY_MAX_CHARGE        = (60200, "uint32", 0.01,  "kW",  "Max charging power limit")
 REG_BATTERY_MAX_DISCHARGE     = (60202, "uint32", 0.01,  "kW",  "Max discharging power limit")
+
+# REG_GRID_STATUS exists from this REG_PROTOCOL_VERSION on (V1.5)
+GRID_STATUS_MIN_PROTOCOL = 0x0105
 
 # Writable registers
 REG_COMM_CONTROL_MODE         = (60301, "uint16", 1,     None,  "0=Local 1=Remote")

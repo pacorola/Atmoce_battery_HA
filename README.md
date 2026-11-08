@@ -39,7 +39,7 @@ Download the [latest release](https://github.com/pacorola/Atmoce_battery_HA/rele
 
 ## Features
 
-- **24 sensors and a problem binary sensor** — grid, solar, battery, plus computed autonomy and self-consumption
+- **24 sensors and two problem binary sensors** — grid, solar, battery, plus computed autonomy and self-consumption
 - **Battery control over Modbus** — force charge or discharge with a target SOC, a duration, or both. Entirely local; no account needed
 - **Battery limits** — end-of-charge, end-of-discharge and backup reserve, which Modbus does not expose. Needs your ordinary atmocecloud.com login
 - **Standing policy** — self-powered or time-of-use, grid charging and export, each with its own power cap and SOC bound. Also from the portal
@@ -99,6 +99,7 @@ Entities are grouped by category on the device page. The operating controls sit 
 | `sensor.atmoce_ms_7k_u_active_data_source` | — | `Modbus` / `Cloud` *(diagnostic)* |
 | `sensor.atmoce_ms_7k_u_connection_errors` | — | Cumulative Modbus failures *(diagnostic)* |
 | `binary_sensor.atmoce_ms_7k_u_battery_problem` | — | On if the battery looks stuck: charge pinned at zero while the panels produce *(diagnostic)* |
+| `binary_sensor.atmoce_ms_7k_u_grid_outage` | — | On while the house runs off grid on the battery; unknown on firmware older than 01.01.00.25 |
 
 > The four `_total` counters come from the gateway itself, so they are the ones to feed the Energy dashboard — no Riemann sum over the power sensors needed.
 

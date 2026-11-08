@@ -195,6 +195,9 @@
     "binary_sensor": {
       "battery_problem": {
         "name": "Problème de batterie"
+      },
+      "grid_outage": {
+        "name": "Coupure réseau"
       }
     },
     "switch": {
