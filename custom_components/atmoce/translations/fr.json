@@ -190,6 +190,39 @@
       },
       "connection_errors": {
         "name": "Erreurs de connexion"
+      },
+      "mi_ac_power": {
+        "name": "Puissance"
+      },
+      "mi_energy_daily": {
+        "name": "Énergie aujourd'hui"
+      },
+      "mi_energy_total": {
+        "name": "Énergie totale"
+      },
+      "mi_ac_voltage": {
+        "name": "Tension AC"
+      },
+      "mi_ac_frequency": {
+        "name": "Fréquence AC"
+      },
+      "mi_temperature": {
+        "name": "Température"
+      },
+      "panel_power": {
+        "name": "Panneau {channel} puissance"
+      },
+      "panel_energy_daily": {
+        "name": "Panneau {channel} énergie aujourd'hui"
+      },
+      "panel_energy_total": {
+        "name": "Panneau {channel} énergie totale"
+      },
+      "panel_dc_voltage": {
+        "name": "Panneau {channel} tension DC"
+      },
+      "panel_dc_current": {
+        "name": "Panneau {channel} courant DC"
       }
     },
     "binary_sensor": {

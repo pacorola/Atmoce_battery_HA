@@ -76,6 +76,40 @@ REG_GRID_ENERGY_DAILY         = (60188, "uint32", 0.01,  "kWh", "Daily grid purc
 REG_BATTERY_MAX_CHARGE        = (60200, "uint32", 0.01,  "kW",  "Max charging power limit")
 REG_BATTERY_MAX_DISCHARGE     = (60202, "uint32", 0.01,  "kW",  "Max discharging power limit")
 
+# ── Microinverter blocks (undocumented) ──────────────────────────────────────
+# Not in the Gateway Modbus Protocol Interface V1.2, found by reading the
+# gateway: each microinverter the gateway manages has a block of
+# MI_BLOCK_SIZE holding registers, the first at address 0, the next at 100, and
+# so on. An empty slot reads back as zeros (it does not time out), so the scan
+# stops at the first block without a serial number. Reads of more than 100
+# registers time out on the gateway, hence one read per block.
+# Offsets are relative to the start of the block. Counters are U32
+# (high word first) even where the high word is always 0 so far.
+# Verified on 2-in-1 microinverters (two panels each), firmware 01.02.00.00.13/17:
+# the per-channel powers add up to the microinverter AC power, the AC powers to
+# REG_PV_POWER, the lifetime counters to REG_PV_ENERGY_TOTAL and the daily
+# counters to REG_PV_ENERGY_DAILY.
+MI_BLOCK_SIZE    = 100
+MI_MAX_COUNT     = 50            # safety cap on the scan
+MI_SCAN_INTERVAL = 60            # seconds; the gateway refreshes these slowly
+MI_OFF_SN        = (1, 6)        # STR, 12 chars, e.g. "ES26721C4D3"
+MI_OFF_FW        = (12, 7)       # STR, e.g. "01.02.00.00.17"
+MI_OFF_RATED_POWER = 28          # U16, W
+MI_OFF_CHANNELS  = 29            # U16, number of PV inputs (panels)
+MI_OFF_AC_POWER  = 40            # U32, W
+MI_OFF_ENERGY_TOTAL = 70         # U32, 0.01 kWh
+MI_OFF_ENERGY_DAILY = 72         # U32, 0.01 kWh
+MI_OFF_AC_VOLTAGE   = 80         # U16, 0.1 V
+MI_OFF_AC_FREQUENCY = 81         # U16, 0.01 Hz
+MI_OFF_TEMPERATURE  = 82         # U16, 0.1 °C (inferred: 22-29 °C on a sunny November noon)
+# Per PV input (channel): U32 power (W), U32 lifetime energy, U32 daily energy
+# (both 0.01 kWh), then DC voltage (0.1 V) and DC current (0.01 A).
+MI_CHANNELS = (
+    {"power": 47, "energy_total": 49, "energy_daily": 51, "dc_voltage": 78, "dc_current": 79},
+    {"power": 57, "energy_total": 59, "energy_daily": 61, "dc_voltage": 85, "dc_current": 86},
+)
+MI_NOT_AVAILABLE = 0xFFFF        # unused inputs read back as 65535
+
 # REG_GRID_STATUS exists from this REG_PROTOCOL_VERSION on (V1.5)
 GRID_STATUS_MIN_PROTOCOL = 0x0105
 
