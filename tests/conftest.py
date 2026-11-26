@@ -51,4 +51,5 @@ def coordinator(mock_hass, mock_config_entry):
     coord._modbus.async_set_forced_power = AsyncMock()
     coord._modbus.async_set_dispatch_power = AsyncMock()
     coord._modbus.async_reset_gateway = AsyncMock()
+    coord._modbus.async_read_microinverters = AsyncMock(return_value=[])
     return coord

@@ -10,6 +10,20 @@ from pymodbus.exceptions import ModbusException
 
 from .const import (
     GRID_STATUS_MIN_PROTOCOL,
+    MI_BLOCK_SIZE,
+    MI_CHANNELS,
+    MI_MAX_COUNT,
+    MI_NOT_AVAILABLE,
+    MI_OFF_AC_FREQUENCY,
+    MI_OFF_AC_POWER,
+    MI_OFF_AC_VOLTAGE,
+    MI_OFF_CHANNELS,
+    MI_OFF_ENERGY_DAILY,
+    MI_OFF_ENERGY_TOTAL,
+    MI_OFF_FW,
+    MI_OFF_RATED_POWER,
+    MI_OFF_SN,
+    MI_OFF_TEMPERATURE,
     MODBUS_TIMEOUT,
     REG_ACTIVE_POWER_PCT,
     REG_BATTERY_CHARGED_DAILY,
@@ -73,6 +87,59 @@ def _regs_to_str(regs: list[int]) -> str:
     """Decode Modbus registers as a packed ASCII string, stripping null bytes and whitespace."""
     raw = b"".join(struct.pack(">H", r) for r in regs)
     return raw.decode("ascii", errors="ignore").strip("\x00").strip()
+
+
+def parse_microinverter(regs: list[int]) -> dict[str, Any] | None:
+    """Decode one microinverter block (MI_BLOCK_SIZE registers).
+
+    Returns None for an empty slot (no serial number).
+    """
+    if len(regs) < MI_BLOCK_SIZE:
+        return None
+    start, length = MI_OFF_SN
+    serial = _regs_to_str(regs[start:start + length])
+    if not serial:
+        return None
+    start, length = MI_OFF_FW
+
+    def u16(offset: int, factor: float = 1) -> float | int | None:
+        raw = regs[offset]
+        if raw == MI_NOT_AVAILABLE:
+            return None
+        return round(raw * factor, 3) if factor != 1 else raw
+
+    def u32(offset: int, factor: float = 1) -> float | int | None:
+        raw = _regs_to_uint32(regs[offset:offset + 2])
+        if raw == 0xFFFFFFFF:
+            return None
+        return round(raw * factor, 3) if factor != 1 else raw
+
+    channel_count = u16(MI_OFF_CHANNELS) or 0
+    channels = []
+    for index, offsets in enumerate(MI_CHANNELS):
+        if index >= channel_count:
+            break
+        channels.append({
+            "power":        u32(offsets["power"]),
+            "energy_total": u32(offsets["energy_total"], 0.01),
+            "energy_daily": u32(offsets["energy_daily"], 0.01),
+            "dc_voltage":   u16(offsets["dc_voltage"], 0.1),
+            "dc_current":   u16(offsets["dc_current"], 0.01),
+        })
+
+    return {
+        "serial_number":  serial,
+        "firmware":       _regs_to_str(regs[start:start + length]),
+        "rated_power":    u16(MI_OFF_RATED_POWER),
+        "channel_count":  channel_count,
+        "ac_power":       u32(MI_OFF_AC_POWER),
+        "energy_total":   u32(MI_OFF_ENERGY_TOTAL, 0.01),
+        "energy_daily":   u32(MI_OFF_ENERGY_DAILY, 0.01),
+        "ac_voltage":     u16(MI_OFF_AC_VOLTAGE, 0.1),
+        "ac_frequency":   u16(MI_OFF_AC_FREQUENCY, 0.01),
+        "temperature":    u16(MI_OFF_TEMPERATURE, 0.1),
+        "channels":       channels,
+    }
 
 
 class AtmoceModbusClient:
@@ -267,6 +334,19 @@ class AtmoceModbusClient:
         scale("forced_power",             0.001)
 
         return data
+
+    # ── Microinverters (undocumented blocks, see const.MI_*) ───────────────────
+    async def async_read_microinverters(self) -> list[dict[str, Any]]:
+        """Read every microinverter block until the first empty slot."""
+        result: list[dict[str, Any]] = []
+        for index in range(MI_MAX_COUNT):
+            regs = await self._read_holding(index * MI_BLOCK_SIZE, MI_BLOCK_SIZE)
+            parsed = parse_microinverter(regs)
+            if parsed is None:
+                break
+            parsed["index"] = index
+            result.append(parsed)
+        return result
 
     # ── Write commands ─────────────────────────────────────────────────────────
     async def async_set_remote_control(self, enabled: bool) -> None:

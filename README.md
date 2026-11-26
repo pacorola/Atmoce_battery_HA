@@ -103,6 +103,22 @@ Entities are grouped by category on the device page. The operating controls sit 
 
 > The four `_total` counters come from the gateway itself, so they are the ones to feed the Energy dashboard — no Riemann sum over the power sensors needed.
 
+### Microinverters (Modbus, local)
+
+Each microinverter managed by the gateway becomes its own device, **Atmoce MI ‹serial›**, linked to the gateway. Values are refreshed every **60 seconds**: the gateway itself only updates them every few minutes.
+
+| Entity | Unit | Notes |
+|---|---|---|
+| Power | W | AC output of the microinverter |
+| Energy today / Energy total | kWh | Energy dashboard ready (`total_increasing`) |
+| Panel N power | W | Per PV input; the panels add up to the microinverter power |
+| Panel N energy today / total | kWh | Per PV input |
+| Panel N DC voltage / DC current | V / A | *(diagnostic)* |
+| AC voltage / AC frequency | V / Hz | *(diagnostic)* |
+| Temperature | °C | *(diagnostic)* |
+
+> These registers are **not in Atmoce's Modbus documentation** (V1.2). They were found by reading a gateway with five 2-in-1 microinverters: one block of 100 holding registers per microinverter from address 0, the serial number at offset 1. The per-panel powers add up to the microinverter power, the microinverters to the gateway PV power, and the energy counters to the gateway totals. The temperature is inferred (its unit and plausibility fit, nothing confirms it). Microinverters with more than two inputs expose their first two only until someone confirms the layout. A failed read never affects the other entities.
+
 ### Battery control (Modbus, local)
 
 | Entity | Description |

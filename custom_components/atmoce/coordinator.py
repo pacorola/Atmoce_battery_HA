@@ -44,6 +44,7 @@ from .const import (
     KEY_SELL_TO_GRID_POWER_MAX,
     KEY_SELL_TO_GRID_UP_SOC,
     KEY_WORK_MODE,
+    MI_SCAN_INTERVAL,
     MODBUS_RETRY_COUNT,
     SOURCE_CLOUD,
     SOURCE_MODBUS,
@@ -178,6 +179,12 @@ class AtmoceCoordinator(DataUpdateCoordinator):
         self.firmware_version: str = "unknown"
         self.hw_version: int = 0
 
+        # Microinverters: last decoded blocks and when they were read. The
+        # gateway refreshes them slowly, so they are read every
+        # MI_SCAN_INTERVAL seconds rather than on every poll.
+        self._mi_data: list[dict[str, Any]] = []
+        self._mi_last_read: float | None = None
+
         # Rolling consumption buffer for autonomy calculation
         self._consumption_history: list[float] = []
 
@@ -230,6 +237,11 @@ class AtmoceCoordinator(DataUpdateCoordinator):
 
         if raw is None:
             raise UpdateFailed("Both Modbus and Cloud data sources unavailable")
+
+        # Microinverters (Modbus only; the Cloud fallback has no such data)
+        if self._active_source == SOURCE_MODBUS:
+            await self._refresh_microinverters()
+        raw["microinverters"] = self._mi_data
 
         # Enrich with computed sensors
         raw["active_source"] = self._active_source
@@ -291,6 +303,26 @@ class AtmoceCoordinator(DataUpdateCoordinator):
                 pass
 
         return data
+
+    async def _refresh_microinverters(self) -> None:
+        """Re-read the microinverter blocks when MI_SCAN_INTERVAL has passed.
+
+        A failure keeps the previous values: these blocks are undocumented and
+        must never make the main poll fail.
+        """
+        now = self.hass.loop.time()
+        if self._mi_last_read is not None and now - self._mi_last_read < MI_SCAN_INTERVAL:
+            return
+        self._mi_last_read = now
+        try:
+            self._mi_data = await self._modbus.async_read_microinverters()
+        except (TimeoutError, ConnectionError, ModbusException, OSError) as exc:
+            _LOGGER.debug("Microinverter read failed: %s", exc)
+
+    @property
+    def microinverters(self) -> list[dict[str, Any]]:
+        """Last decoded microinverter blocks (empty before the first read)."""
+        return self._mi_data
 
     # ── Cloud client ──────────────────────────────────────────────────────────
     def _get_cloud_client(self) -> Any:
